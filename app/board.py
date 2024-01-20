@@ -133,8 +133,8 @@ if config.value["layout"] == "v4":
     button8 = Button([0], 8)
 elif config.value["layout"] == "v3":        
     led = RgbLed(18, 17, 16)
-    buttonON = Button([0, 5], 'on')
-    buttonOFF = Button([10, 15], 'off')
+    buttonON = Button([0, 5], 'off')
+    buttonOFF = Button([10, 15], 'on')
     button1 = Button([28], 1)
     button2 = Button([11], 2)
     button3 = Button([6], 3)
