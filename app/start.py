@@ -1,14 +1,9 @@
 def connectToWifiAndUpdate():
-    import time, machine, network, gc, app.config as config, app.board as board
+    import time, machine, network, gc, app.config as config
     time.sleep(1)
     print('Memory free', gc.mem_free())
 
-    try:
-        config.read()
-        board.setup()
-        board.led.do_color(0, 50, 0)
-    except Exception as e:
-        print("Error setting up board: " + str(e))
+    config.read()
 
     from app.ota_updater.ota_updater import OTAUpdater
 
