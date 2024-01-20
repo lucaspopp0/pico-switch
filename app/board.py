@@ -120,7 +120,7 @@ def longpress(num):
     return keypress(str(num) + "-long")
 
 if config.value["layout"] == "v4":
-    led = RgbLed(16, 17, 18)
+    
     buttonON = Button([9, 6], 'on')
     buttonOFF = Button([3, 2], 'off')
     button1 = Button([10], 1)
@@ -133,8 +133,8 @@ if config.value["layout"] == "v4":
     button8 = Button([0], 8)
 elif config.value["layout"] == "v3":        
     led = RgbLed(18, 17, 16)
-    buttonON = Button([0, 5], 'off')
-    buttonOFF = Button([10, 15], 'on')
+    buttonON = Button([0, 5], 'on')
+    buttonOFF = Button([10, 15], 'off')
     button1 = Button([28], 1)
     button2 = Button([11], 2)
     button3 = Button([6], 3)
