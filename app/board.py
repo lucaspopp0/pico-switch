@@ -106,9 +106,6 @@ class RgbLed:
             time.sleep(seconds)
             self.off()
             time.sleep(seconds)
-            
-        
-led = RgbLed(16, 17, 18)
     
 def keypress(num):
     req = request.Request('remote-press?remote=' + hooks.urlencode('New Bedroom') + '&button=' + str(num))
@@ -123,6 +120,7 @@ def longpress(num):
     return keypress(str(num) + "-long")
 
 if config.value["layout"] == "v4":
+    led = RgbLed(16, 17, 18)
     buttonON = Button([9, 6], 'on')
     buttonOFF = Button([3, 2], 'off')
     button1 = Button([10], 1)
@@ -133,7 +131,8 @@ if config.value["layout"] == "v4":
     button6 = Button([4], 6)
     button7 = Button([1], 7)
     button8 = Button([0], 8)
-elif config.value["layout"] == "v3":
+elif config.value["layout"] == "v3":        
+    led = RgbLed(18, 17, 16)
     buttonON = Button([0, 5], 'on')
     buttonOFF = Button([10, 15], 'off')
     button1 = Button([28], 1)
