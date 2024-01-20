@@ -1,7 +1,9 @@
 def connectToWifiAndUpdate():
-    import time, machine, network, gc, app.secrets as secrets
+    import time, machine, network, gc, app.config as config
     time.sleep(1)
     print('Memory free', gc.mem_free())
+
+    config.read()
 
     from app.ota_updater import OTAUpdater
 
@@ -9,11 +11,11 @@ def connectToWifiAndUpdate():
     if not sta_if.isconnected():
         print('connecting to network...')
         sta_if.active(True)
-        sta_if.connect(secrets.WIFI_SSID, secrets.WIFI_PASSWORD)
+        sta_if.connect(config.value["wifi"]["ssid"], config.value["wifi"]["pass"])
         while not sta_if.isconnected():
             pass
     print('network config:', sta_if.ifconfig())
-    otaUpdater = OTAUpdater('https://github.com/rdehuyss/micropython-ota-updater', main_dir='app', secrets_file="secrets.py")
+    otaUpdater = OTAUpdater('https://github.com/lucaspopp0/pico-switch', main_dir='app')
     hasUpdated = otaUpdater.install_update_if_available()
     if hasUpdated:
         machine.reset()
