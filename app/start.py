@@ -32,6 +32,8 @@ def startApp():
     config.read()
     wifi.connect()
 
+    print("New version :)")
+
     while True:
         board.request_queue.poll()
 
