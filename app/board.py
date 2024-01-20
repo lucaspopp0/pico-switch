@@ -7,6 +7,8 @@ from . import config
 
 request_queue = request.RequestQueue()
 
+led = None
+
 def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
 
@@ -119,33 +121,35 @@ def keypress(num):
 def longpress(num):
     return keypress(str(num) + "-long")
 
-if config.value["layout"] == "v4":
-    led = RgbLed(16, 17, 18)
-    buttonON = Button([9, 6], 'on')
-    buttonOFF = Button([3, 2], 'off')
-    button1 = Button([10], 1)
-    button2 = Button([11], 2)
-    button3 = Button([8], 3)
-    button4 = Button([7], 4)
-    button5 = Button([5], 5)
-    button6 = Button([4], 6)
-    button7 = Button([1], 7)
-    button8 = Button([0], 8)
-elif config.value["layout"] == "v3":        
-    led = RgbLed(18, 17, 16)
-    buttonON = Button([0, 5], 'on')
-    buttonOFF = Button([10, 15], 'off')
-    button1 = Button([28], 1)
-    button2 = Button([11], 2)
-    button3 = Button([6], 3)
-    button4 = Button([1], 4)
-    button5 = Button([27], 5)
-    button6 = Button([12], 6)
-    button7 = Button([7], 7)
-    button8 = Button([2], 8)
-    button9 = Button([26], 9)
-    button10 = Button([13], 10)
-    button11 = Button([8], 11)
-    button12 = Button([3], 12)
-else:
-    print("Unexpected config layout: " + str(config.value["layout"]))
+def setup():
+    global led
+    if config.value["layout"] == "v4":
+        led = RgbLed(16, 17, 18)
+        buttonON = Button([9, 6], 'on')
+        buttonOFF = Button([3, 2], 'off')
+        button1 = Button([10], 1)
+        button2 = Button([11], 2)
+        button3 = Button([8], 3)
+        button4 = Button([7], 4)
+        button5 = Button([5], 5)
+        button6 = Button([4], 6)
+        button7 = Button([1], 7)
+        button8 = Button([0], 8)
+    elif config.value["layout"] == "v3":        
+        led = RgbLed(18, 17, 16)
+        buttonON = Button([0, 5], 'on')
+        buttonOFF = Button([10, 15], 'off')
+        button1 = Button([28], 1)
+        button2 = Button([11], 2)
+        button3 = Button([6], 3)
+        button4 = Button([1], 4)
+        button5 = Button([27], 5)
+        button6 = Button([12], 6)
+        button7 = Button([7], 7)
+        button8 = Button([2], 8)
+        button9 = Button([26], 9)
+        button10 = Button([13], 10)
+        button11 = Button([8], 11)
+        button12 = Button([3], 12)
+    else:
+        print("Unexpected config layout: " + str(config.value["layout"]))
