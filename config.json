@@ -1,0 +1,7 @@
+{
+    "wifi": {
+        "ssid": "<your-ssid>",
+        "pass": "<your-ssid>"
+    },
+    "home-assistant-ip": "<your-home-assistant-instance-ipv4-address>"
+}
