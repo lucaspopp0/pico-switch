@@ -28,8 +28,9 @@ def startApp():
     from . import board
     from . import config
 
-    board.led.off()
     config.read()
+    board.setup()
+    board.led.off()
     wifi.connect()
 
     print("New version :)")
