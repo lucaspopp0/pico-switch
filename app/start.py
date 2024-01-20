@@ -5,7 +5,7 @@ def connectToWifiAndUpdate():
 
     config.read()
 
-    from app.ota_updater import OTAUpdater
+    from app.ota_updater.ota_updater import OTAUpdater
 
     sta_if = network.WLAN(network.STA_IF)
     if not sta_if.isconnected():
