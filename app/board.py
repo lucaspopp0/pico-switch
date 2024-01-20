@@ -3,6 +3,7 @@ import time
 import uasyncio
 from . import hooks
 from . import request
+from . import config
 
 request_queue = request.RequestQueue()
 
@@ -12,7 +13,7 @@ def pwmFreq(perc):
 longpress_ms = 1500
 
 def _buttonAction(key, long=False):
-    req = request.Request('remote-press?remote=' + hooks.urlencode('New Bedroom') + '&button=' + str(key))
+    req = request.Request('remote-press?remote=' + hooks.urlencode(config.value["name"]) + '&button=' + str(key))
     def on_success(response):
         led.off()
     def on_failure(response):
@@ -121,32 +122,31 @@ def keypress(num):
 def longpress(num):
     return keypress(str(num) + "-long")
 
-buttonON = Button([9, 6], 'on')
-buttonOFF = Button([3, 2], 'off')
-button1 = Button([10], 1)
-button2 = Button([11], 2)
-button3 = Button([8], 3)
-button4 = Button([7], 4)
-button5 = Button([5], 5)
-button6 = Button([4], 6)
-button7 = Button([1], 7)
-button8 = Button([0], 8)
-
-buttons = [
-    buttonON,
-    buttonOFF,
-    button1,
-    button2,
-    button3,
-    button4,
-    button5,
-    button6,
-    button7,
-    button8,
-]
-
-def mainloop():
-    for button in buttons:
-        button.update()
-
-
+if config.value["layout"] == "v4":
+    buttonON = Button([9, 6], 'on')
+    buttonOFF = Button([3, 2], 'off')
+    button1 = Button([10], 1)
+    button2 = Button([11], 2)
+    button3 = Button([8], 3)
+    button4 = Button([7], 4)
+    button5 = Button([5], 5)
+    button6 = Button([4], 6)
+    button7 = Button([1], 7)
+    button8 = Button([0], 8)
+elif config.value["layout"] == "v3":
+    buttonON = Button([0, 5], 'on')
+    buttonOFF = Button([10, 15], 'off')
+    button1 = Button([28], 1)
+    button2 = Button([11], 2)
+    button3 = Button([6], 3)
+    button4 = Button([1], 4)
+    button5 = Button([27], 5)
+    button6 = Button([12], 6)
+    button7 = Button([7], 7)
+    button8 = Button([2], 8)
+    button9 = Button([26], 9)
+    button10 = Button([13], 10)
+    button11 = Button([8], 11)
+    button12 = Button([3], 12)
+else:
+    print("Unexpected config layout: " + str(config.value["layout"]))

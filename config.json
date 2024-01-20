@@ -1,4 +1,6 @@
 {
+    "name": "<switch-name>",
+    "layout": "v4",
     "wifi": {
         "ssid": "<your-ssid>",
         "pass": "<your-ssid>"
