@@ -32,3 +32,5 @@ jobs:
       - name: Create release
         run: |
           gh release create '${{ steps.version.outputs.version_tag }}' --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
