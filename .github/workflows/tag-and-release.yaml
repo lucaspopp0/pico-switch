@@ -21,9 +21,11 @@ jobs:
         with:
           change_path: "app"
 
-      - name: Tag and release
-        uses: avakar/tag-and-release@v1
-        with:
-          tag_name: ${{ steps.version.outputs.version_tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag commit
+        run: |
+          git tag '${{ steps.version.outputs.version_tag }}'
+          git push origin '${{ steps.version.outputs.version_tag }}'
+
+      - name: Create release
+        run: |
+          gh release create '${{ steps.version.outputs.version_tag }}' --generate-notes
