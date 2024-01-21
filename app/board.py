@@ -5,6 +5,8 @@ from . import hooks
 from . import request
 from . import config
 
+is_setup = False
+
 request_queue = request.RequestQueue()
 
 led = None
@@ -122,7 +124,10 @@ def longpress(num):
     return keypress(str(num) + "-long")
 
 def setup():
-    global led
+    global led, is_setup
+    if is_setup:
+        return
+    is_setup = True
     if config.value["layout"] == "v4":
         led = RgbLed(16, 17, 18)
         buttonON = Button([9, 6], 'on')
