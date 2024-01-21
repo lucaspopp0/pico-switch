@@ -5,8 +5,10 @@ def connectToWifiAndUpdate():
 
     try:
         from app.ota_updater.ota_updater import OTAUpdater
-        import app.config as config, app.board as board, app.wifi as wifi
+        import app.config as config
         config.read()
+
+        import app.board as board, app.wifi as wifi
         board.setup()
 
         wifi.connect()
