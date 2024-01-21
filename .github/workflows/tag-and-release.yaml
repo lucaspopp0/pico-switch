@@ -1,0 +1,27 @@
+name: tag-and-release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Bump version
+        id: version
+        uses: paulhatch/semantic-version@v5.3.0
+        with:
+          change_path: "app"
+
+      - name: Tag and release
+        uses: avakar/tag-and-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version_tag }}
