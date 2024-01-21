@@ -117,7 +117,7 @@ def keypress(num):
     def inner():
         print("sending")
         req.send(request_queue)
-        
+
     return inner
     
 def longpress(num):

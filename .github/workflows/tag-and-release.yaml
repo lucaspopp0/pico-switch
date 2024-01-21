@@ -31,13 +31,13 @@ jobs:
           echo "should-tag=${{ steps.version.outputs.changed == 'true' && steps.version.outputs.is_tagged == 'false' }}" | tee -a "$GITHUB_OUTPUT"
 
       - name: Tag commit
-        id: ${{ steps.should-tag.outputs.should-tag == 'true' }}
+        if: ${{ steps.should-tag.outputs.should-tag == 'true' }}
         run: |
           git tag '${{ steps.version.outputs.version_tag }}'
           git push origin '${{ steps.version.outputs.version_tag }}'
 
       - name: Create release
-        id: ${{ steps.should-tag.outputs.should-tag == 'true' }}
+        if: ${{ steps.should-tag.outputs.should-tag == 'true' }}
         run: |
           gh release create '${{ steps.version.outputs.version_tag }}' --generate-notes
         env:
