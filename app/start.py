@@ -36,15 +36,26 @@ def startApp():
     from . import wifi
     from . import board
     from . import config
+    from . import refresh
 
     config.read()
     board.setup()
     board.led.off()
+    
+    CHECK_RESTART_INTERVAL = 40
+    CHECK_RESTART_TICKER = 0
 
     while True:
+        CHECK_RESTART_TICKER += 1
+        
+        if CHECK_RESTART_TICKER >= CHECK_RESTART_INTERVAL:
+            CHECK_RESTART_TICKER = 0
+            refresh.restart_if_needed()
+            
         board.request_queue.poll()
 
 
 connectToWifiAndUpdate()
 startApp()
+
 

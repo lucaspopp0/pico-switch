@@ -30,6 +30,9 @@ def _buttonAction(key, long=False):
             led.do_color(0, 50, 50)
         else:
             led.do_color(0, 0, 50)
+        
+        print('Sending: ' + key)
+        
         try:
             req.send(request_queue)
         except OSError as e:
