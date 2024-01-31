@@ -31,7 +31,7 @@ def _buttonAction(key, long=False):
         else:
             led.do_color(0, 0, 50)
         
-        print('Sending: ' + key)
+        print('Sending: ' + str(key))
         
         try:
             req.send(request_queue)

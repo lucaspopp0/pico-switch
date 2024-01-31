@@ -19,7 +19,7 @@ def connectToWifiAndUpdate():
         otaUpdater = OTAUpdater('https://github.com/lucaspopp0/pico-switch', main_dir='app')
         board.led.do_color(10, 10, 10)
         
-        print('Install downloaded update (if available)')
+        print('Download new version (if pending)')
         if otaUpdater.install_update_if_available_after_boot(config.value["wifi"]["ssid"], config.value["wifi"]["pass"]):
             machine.reset()
 
