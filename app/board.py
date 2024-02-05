@@ -88,7 +88,6 @@ class Button:
                 self.action()
             else:
                 self._long_action()
-                self.doubleTapEligible = True
         
             
     def _long_action(self):
