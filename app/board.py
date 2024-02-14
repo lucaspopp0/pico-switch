@@ -15,7 +15,6 @@ def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
 
 longpress_ms = 1500
-doubletap_ms = 400
 
 def _buttonAction(key, long=False):
     req = request.Request('remote-press?remote=' + hooks.urlencode(config.value["name"]) + '&button=' + str(key))
@@ -48,8 +47,6 @@ class Button:
         self.pressed = False
         self.last_press_time = time.ticks_ms()
         self.longPressTimer = Timer()
-        self.doubleTapTimer = Timer()
-        self.doubleTapEligible = False
         
         self.action = _buttonAction(key)
         self.long = _buttonAction(str(key) + '-long', long=True)
@@ -69,20 +66,11 @@ class Button:
         self.pressed = any(pin.value() == 0 for pin in self.gpios)
         
         if self.pressed != self.last_pressed:
-            if self.pressed and self.doubleTapEligible:
-                self.doubleTapEligible = False
-                self._long_action()
-                now = time.ticks_ms()
-                self.last_press_time = now
-            elif self.pressed:
-                def dtc(t):
-                    self.doubleTapEligible = False
+            if self.pressed:
                 def lpc(t):
                     self._long_action()
                 
-                self.doubleTapEligible = True
                 self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
-                self.doubleTapTimer.init(mode=Timer.ONE_SHOT, period=doubletap_ms, callback=dtc)
                 now = time.ticks_ms()
                 self.last_press_time = now
                 self.action()
