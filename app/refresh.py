@@ -5,10 +5,15 @@ import os
 _dir = "app"
 _last_restart_file_name = ".last-restart"
 
-def restart_if_needed():    
+def restart_if_needed():
     (_, _, day, hour, minute, second, _, _) = time.localtime()
     last_restart_day = last_restart()
-    
+
+    print("Checking if time to update...")
+    print("  Last restart day: " + str(last_restart_day))
+    print("  Current day: " + str(day))
+    print("  Current hour: " + str(hour))
+
     if last_restart_day != day and hour == 3:
         record_restart(day)
         machine.reset()
@@ -24,3 +29,4 @@ def record_restart(day):
     with open(_dir + '/' + _last_restart_file_name, 'w') as last_restart_file:
         last_restart_file.write(str(day))
         last_restart_file.close()
+
