@@ -165,12 +165,13 @@ def setup():
     elif config.value["layout"] == "v5":
         led = RgbLed(16, 17, 18)
         
-        dialScenes = [
-            wheel.Routine("night", [255, 10, 0], "1"),
-            wheel.Routine("pink", [200, 5, 5], "2"),
-            wheel.Routine("purple", [50, 0, 100], "3"),
-            wheel.Routine("green", [0, 255, 20], "4")
-        ]
+        dialScenes = []
+        
+        if config.value["wheel-routines"]:
+            for name in config.value["wheel-routines"]:
+                routine = config.value["wheel-routines"][name]
+                scene = wheel.Routine(name, routine["rgb"], 0)
+                dialScenes.append(scene)
                 
         dial = wheel.Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
         buttonON = Button([13, 14], 'on')
