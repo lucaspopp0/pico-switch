@@ -168,9 +168,8 @@ def setup():
         dialScenes = []
         
         if config.value["wheel-routines"]:
-            for name in config.value["wheel-routines"]:
-                routine = config.value["wheel-routines"][name]
-                scene = wheel.Routine(name, routine["rgb"], 0)
+            for routine in config.value["wheel-routines"]:
+                scene = wheel.Routine(routine["name"], routine["rgb"], 0)
                 dialScenes.append(scene)
                 
         dial = wheel.Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
