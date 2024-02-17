@@ -4,12 +4,15 @@ import uasyncio
 from . import hooks
 from . import request
 from . import config
+from . import wheel
 
 is_setup = False
 
 request_queue = request.RequestQueue()
 
 led = None
+
+dial = None
 
 def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
@@ -127,7 +130,7 @@ def longpress(num):
     return keypress(str(num) + "-long")
 
 def setup():
-    global led, is_setup
+    global led, is_setup, dial
     if is_setup:
         return
     is_setup = True
@@ -159,5 +162,23 @@ def setup():
         button10 = Button([13], 10)
         button11 = Button([8], 11)
         button12 = Button([3], 12)
+    elif config.value["layout"] == "v5":
+        led = RgbLed(16, 17, 18)
+        
+        dialScenes = [
+            wheel.Routine("night", [255, 10, 0], "1"),
+            wheel.Routine("pink", [200, 5, 5], "2"),
+            wheel.Routine("purple", [50, 0, 100], "3"),
+            wheel.Routine("green", [0, 255, 20], "4")
+        ]
+                
+        dial = wheel.Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+        buttonON = Button([13, 14], 'on')
+        buttonOFF = Button([0, 2], 'off')
+        button1 = Button([15], 5)
+        button2 = Button([12], 6)
+        button3 = Button([11], 7)
+        button4 = Button([1], 8)
+
     else:
         print("Unexpected config layout: " + str(config.value["layout"]))
