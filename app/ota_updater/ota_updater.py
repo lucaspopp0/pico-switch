@@ -3,7 +3,7 @@ from .httpclient import HttpClient
 
 def isGreater(version1, version2):
     def parse(version):
-        return list(map(lambda x : int(x), version1.strip('v').split('.')))
+        return list(map(lambda x : int(x), version.strip('v').split('.')))
     
     v1 = parse(version1)
     v2 = parse(version2)
