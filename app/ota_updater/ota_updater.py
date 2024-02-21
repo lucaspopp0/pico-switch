@@ -9,21 +9,21 @@ def isGreater(version1, version2):
     v2 = parse(version2)
     
     if v1[0] > v2[0]:
-        return true
+        return True
     
     if v1[0] < v2[0]:
-        return false
+        return False
     
     if v1[1] > v2[1]:
-        return true
+        return True
     
     if v1[1] < v2[1]:
-        return false
+        return False
     
     if v1[2] > v2[2]:
-        return true
+        return True
     
-    return false
+    return False
 
 class OTAUpdater:
     """
