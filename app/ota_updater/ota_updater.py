@@ -1,6 +1,30 @@
 import os, gc
 from .httpclient import HttpClient
 
+def isGreater(version1, version2):
+    def parse(version):
+        return list(map(lambda x : int(x), version1.strip('v').split('.')))
+    
+    v1 = parse(version1)
+    v2 = parse(version2)
+    
+    if v1[0] > v2[0]:
+        return true
+    
+    if v1[0] < v2[0]:
+        return false
+    
+    if v1[1] > v2[1]:
+        return true
+    
+    if v1[1] < v2[1]:
+        return false
+    
+    if v1[2] > v2[2]:
+        return true
+    
+    return false
+
 class OTAUpdater:
     """
     A class to update your MicroController with the latest version from a GitHub tagged release,
@@ -34,7 +58,7 @@ class OTAUpdater:
         """
 
         (current_version, latest_version) = self._check_for_new_version()
-        if latest_version > current_version:
+        if isGreater(latest_version, current_version):
             print('New version available, will download and install on next reboot')
             self._create_new_version_file(latest_version)
             return True
@@ -75,7 +99,7 @@ class OTAUpdater:
         """
 
         (current_version, latest_version) = self._check_for_new_version()
-        if latest_version > current_version:
+        if isGreater(latest_version, current_version):
             print('Updating to version {}...'.format(latest_version))
             self._create_new_version_file(latest_version)
             self._download_new_version(latest_version)
@@ -127,7 +151,7 @@ class OTAUpdater:
         try:
             version = gh_json['tag_name']
         except KeyError as e:
-            raise ValueError(
+            print(
                 "Release not found: \n",
                 "Please ensure release as marked as 'latest', rather than pre-release \n",
                 "github api message: \n {} \n ".format(gh_json)
