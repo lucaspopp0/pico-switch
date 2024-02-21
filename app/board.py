@@ -5,7 +5,6 @@ from . import hooks
 from . import request
 from . import config
 from . import wheel
-from .switch import Switch
 
 is_setup = False
 
@@ -15,18 +14,12 @@ led = None
 
 dial = None
 
-switch = None
-
-accepting_inputs = True
-
 def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
 
 longpress_ms = 1500
 
 def _buttonAction(key, long=False):
-    global accepting_inputs
-    
     req = request.Request('remote-press?remote=' + hooks.urlencode(config.value["name"]) + '&button=' + str(key))
     def on_success(response):
         led.off()
@@ -35,12 +28,6 @@ def _buttonAction(key, long=False):
     req.on_success = on_success
     req.on_failure = on_failure
     def act():
-        global accepting_inputs
-        
-        if not accepting_inputs:
-            print("Remote off")
-            return
-    
         if long:
             led.do_color(0, 50, 50)
         else:
@@ -143,7 +130,7 @@ def longpress(num):
     return keypress(str(num) + "-long")
 
 def setup():
-    global led, is_setup, dial, switch, accepting_inputs
+    global led, is_setup, dial
     if is_setup:
         return
     is_setup = True
@@ -192,43 +179,6 @@ def setup():
         button2 = Button([12], 6)
         button3 = Button([11], 7)
         button4 = Button([1], 8)
-    elif config.value["layout"] == "v6":
-        led = RgbLed(16, 17, 18)
-        
-        dialScenes = []
-        
-        if config.value["wheel-routines"]:
-            for routine in config.value["wheel-routines"]:
-                scene = wheel.Routine(routine["name"], routine["rgb"], 0)
-                dialScenes.append(scene)
-                
-        dial = wheel.Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
-        buttonON = Button([13, 14], 'on')
-        buttonOFF = Button([0, 2], 'off')
-        button1 = Button([15], 5)
-        button2 = Button([12], 6)
-        button3 = Button([11], 7)
-        button4 = Button([1], 8)
-        
-        def _on():
-            global accepting_inputs, dial
-            print("Accepting inputs")
-            accepting_inputs = True
-            if dial is not None:
-                dial.enabled = True
-            
-        def _off():
-            global accepting_inputs, dial
-            print("Not accepting inputs")
-            accepting_inputs = False
-            if dial is not None:
-                dial.enabled = False
-            
-        
-        switch = Switch(27, 28, {
-            "on": _on,
-            "off": _off
-        })
 
     else:
         print("Unexpected config layout: " + str(config.value["layout"]))

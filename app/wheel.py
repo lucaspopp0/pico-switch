@@ -18,7 +18,6 @@ class Wheel:
         self.dt = Pin(dt, Pin.IN)
         self.sw = Pin(sw, Pin.IN, Pin.PULL_UP)
         self.options = options
-        self.enabled = True
         
         self.currentA = 0
         self.lastA = 0
@@ -54,10 +53,6 @@ class Wheel:
         self.currentA = a
         
         if a == 0:
-            return
-        
-        if not self.enabled:
-            print("Not enabled")
             return
         
         print("---")
