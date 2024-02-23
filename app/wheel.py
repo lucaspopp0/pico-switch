@@ -1,8 +1,7 @@
 from machine import Pin, Timer
 import uasyncio
 from . import hooks
-
-longpress_ms = 1500
+from . import constants
 
 class Routine:
     
@@ -96,7 +95,7 @@ class Wheel:
                 def lpc(t):
                     self._long_action()
                 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=constants.longpress_ms, callback=lpc)
                 self._send_hook()
             
     def _long_action(self):

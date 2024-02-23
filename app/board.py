@@ -6,6 +6,7 @@ from . import request
 from . import config
 from . import wheel
 from .switch import Switch
+from . import constants
 
 is_setup = False
 
@@ -21,8 +22,6 @@ accepting_inputs = True
 
 def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
-
-longpress_ms = 1500
 
 def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs
@@ -88,7 +87,7 @@ class Button:
                 def lpc(t):
                     self._long_action()
                 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=constants.longpress_ms, callback=lpc)
                 now = time.ticks_ms()
                 self.last_press_time = now
                 self.action()
