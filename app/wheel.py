@@ -2,6 +2,8 @@ from machine import Pin, Timer
 import uasyncio
 from . import hooks
 
+longpress_ms = 1500
+
 class Routine:
     
     def __init__(self, name, color, button):
@@ -25,8 +27,12 @@ class Wheel:
         self.size = len(options)
         self.value = 0
         
+        self.last_pressed = False
+        self.pressed = False
+        self.longPressTimer = Timer()
+        
         self.clk.irq(lambda p:self._rotated())
-        self.sw.irq(lambda p:self._pressed(), trigger=Pin.IRQ_FALLING)
+        self.sw.irq(lambda p:self._pressed())
         
         self.timer = None
         self._flash_color()
@@ -80,13 +86,33 @@ class Wheel:
         self._reset_timer()
         
     def _pressed(self):
-        print("pressed: " + self.current_option().name)
-        self._flash_color()
-        self._send_hook()
-        self._reset_timer()
+        self.last_pressed = self.pressed
+        # check equal to zero due to using PULL_UP resistor
+        self.pressed = self.sw.value() == 0
         
-    def _send_hook(self):
-        self.handle_press(self.current_option().name)()
+        if self.pressed != self.last_pressed:
+            if self.pressed:
+                print("pressed: " + self.current_option().name)
+                def lpc(t):
+                    self._long_action()
+                
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                self._send_hook()
+            
+    def _long_action(self):
+        if self.pressed:
+            self._send_hook(True)
+        
+    def _send_hook(self, long=False):
+        self.timer.deinit()
+        self._flash_color()
+                
+        name = self.current_option().name
+        if long:
+            name = name + '-long'
+        
+        self.handle_press(name, long, flash_progress=False)()
+        self._reset_timer()
         
     def _flash_color(self):
         color = self.current_option().color

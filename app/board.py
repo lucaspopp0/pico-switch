@@ -24,12 +24,13 @@ def pwmFreq(perc):
 
 longpress_ms = 1500
 
-def _buttonAction(key, long=False):
+def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs
     
     req = request.Request('remote-press?remote=' + hooks.urlencode(config.value["name"]) + '&button=' + str(key))
     def on_success(response):
-        led.off()
+        if flash_progress:
+            led.off()
     def on_failure(response):
         uasyncio.run(led.flash(100, 0, 0, times=2))
     req.on_success = on_success
@@ -41,10 +42,11 @@ def _buttonAction(key, long=False):
             print("Remote off")
             return
     
-        if long:
-            led.do_color(0, 50, 50)
-        else:
-            led.do_color(0, 0, 50)
+        if flash_progress:
+            if long:
+                led.do_color(0, 50, 50)
+            else:
+                led.do_color(0, 0, 50)
         
         print('Sending: ' + str(key))
         
