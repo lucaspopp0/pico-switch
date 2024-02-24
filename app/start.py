@@ -34,10 +34,14 @@ def startApp():
     from . import board
     from . import config
     from . import refresh
+    from .server import server
 
     config.read()
     board.setup()
     board.led.off()
+    
+    svr = server.Server()
+    svr.start()
     
     CHECK_RESTART_INTERVAL = 40
     CHECK_RESTART_TICKER = 0
@@ -50,6 +54,7 @@ def startApp():
             refresh.restart_if_needed()
             
         board.request_queue.poll()
+        svr.poll()
 
 
 connectToWifiAndUpdate()
