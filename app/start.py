@@ -13,7 +13,15 @@ def connectToWifiAndUpdate():
 
     try:
         from app.ota_updater.ota_updater import OTAUpdater
-        import app.board as board, app.wifi as wifi
+        import app.board as board
+        import app.wifi as wifi
+        import app.config as config
+        config.read()
+        
+        headers = {}
+        if "github-token" in config.value:
+            headers["Authorization"] = "Bearer " + str(config.value["github-token"])
+            headers["X-GitHub-Api-Version"] = "2022-11-28"
 
         wifi.connect()
         otaUpdater = OTAUpdater('https://github.com/lucaspopp0/pico-switch', main_dir='app')

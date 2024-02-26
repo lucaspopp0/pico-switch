@@ -6,5 +6,6 @@
         "pass": "<your-ssid>"
     },
     "home-assistant-ip": "<your-home-assistant-instance-ipv4-address>",
+    "github-token": "<your-github-token>",
     "wheel-routines": []
 }
