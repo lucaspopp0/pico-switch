@@ -52,7 +52,7 @@ def startApp():
         if CHECK_RESTART_TICKER >= CHECK_RESTART_INTERVAL:
             CHECK_RESTART_TICKER = 0
             refresh.restart_if_needed()
-            
+        
         board.request_queue.poll()
         svr.poll()
 

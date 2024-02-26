@@ -58,8 +58,19 @@ class Server:
         if self._sock is None:
             return
         
+        connect = None
+        address = None
+        
         try:
-            self._connect, address = self._sock.accept()
+            self._sock.settimeout(0.5)
+            connect, address = self._sock.accept()
+        except Exception as e:
+            return
+            
+        self._connect = connect
+        
+        try:
+            self._sock.settimeout(15)
             request = self.get_request()
             if len(request) == 0:
                 self._connect.close()
