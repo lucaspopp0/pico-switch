@@ -28,7 +28,6 @@ def _buttonAction(key, long=False, flash_progress=True):
     
     req = request.Request('remote-press?remote=' + hooks.urlencode(config.value["name"]) + '&button=' + str(key))
     def on_success(response):
-        print("success")
         if flash_progress:
             led.off()
     def on_failure(response):

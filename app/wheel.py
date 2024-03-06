@@ -65,10 +65,6 @@ class Wheel:
             print("Not enabled")
             return
         
-        print("---")
-        print("A: " + str(a))
-        print("B: " + str(b))
-        
         if self.currentA == self.lastA:
             return
         
@@ -79,7 +75,7 @@ class Wheel:
 
         self.value = self.value % self.size
         
-        print(self.options[self.value].name + " (" + str(self.value) + ")")
+        print("scrolled to: " + self.options[self.value].name)
         
         self._flash_color()
         self._reset_timer()

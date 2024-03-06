@@ -42,13 +42,16 @@ def startApp():
     from . import board
     from . import config
     from . import refresh
+    from . import routes
     from .server import server
 
+    config.read_version()
     config.read()
     board.setup()
     board.led.off()
     
     svr = server.Server()
+    routes.setup_routes(svr)
     svr.start()
     
     CHECK_RESTART_INTERVAL = 40

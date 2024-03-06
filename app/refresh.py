@@ -9,11 +9,6 @@ def restart_if_needed():
     (_, _, day, hour, minute, second, _, _) = time.localtime()
     last_restart_day = last_restart()
 
-    print("Checking if time to update...")
-    print("  Last restart day: " + str(last_restart_day))
-    print("  Current day: " + str(day))
-    print("  Current hour: " + str(hour))
-
     if last_restart_day != day and hour == 3:
         record_restart(day)
         machine.reset()

@@ -72,7 +72,6 @@ class Request:
         self.response = self.socket.recv(1000)
 
     def handle_response(self):
-        print("responded")
         if self.response.startswith(b'HTTP/1.1 200'):
             self.succeeded()
         else:
