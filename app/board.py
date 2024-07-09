@@ -53,6 +53,8 @@ def _buttonAction(key, long=False, flash_progress=True):
             req.send(request_queue)
         except OSError as e:
             print("Failed to send: " + str(e))
+            req.failed()
+            
     return act
 
 class Button:

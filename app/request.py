@@ -2,6 +2,7 @@ import select
 import socket
 import time
 from . import sockets
+from . import constants
 
 class RequestQueue:
 
@@ -34,6 +35,9 @@ class RequestQueue:
             for req in self.requestsByPath[path]:
                 if req.is_expired():
                     to_prune.append(req)
+                    
+                    if len(self.requestsByPath[path]) == 1:
+                        req.failed()
 
         for req in to_prune:
             self.requestsByPath[req.path].remove(req)
@@ -80,9 +84,9 @@ class Request:
         self.socket = sockets.new_socket()
         queue.add(self)
         raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
-        print('Sending: ' + str(raw))
+        print('Sending: ' + self.path)
+        self.expiry = time.time() + constants.request_timeout_s
         self.socket.send(raw)
-        self.expiry = time.time() + 10
 
     def is_expired(self):
         if self.expiry is not None:
@@ -100,15 +104,23 @@ class Request:
             self.failed()
 
     def succeeded(self):
-        print('Request succeeded: ' + str(self.response))
+        resp = parse_response(str(self.response))
+        print('Request succeeded: ' + resp)
         if self.on_success is not None:
-            self.on_success(self.response)
+            self.on_success(resp)
 
     def failed(self):
-        print('Request failed: ' + str(self.response))
+        err = parse_response(str(self.response))
+        print('Request failed: ' + err)
         if self.on_failure is not None:
-            self.on_failure(self.response)
+            self.on_failure(err)
 
     def close(self):
         self.socket.close()
         self.socket = None
+
+def parse_response(response):
+    ind = response.find("\r")
+    if ind < 0:
+        return response
+    return response[0:ind]
