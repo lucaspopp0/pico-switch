@@ -1,5 +1,4 @@
 import select
-import socket
 import time
 from . import sockets
 from . import constants
