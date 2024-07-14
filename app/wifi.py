@@ -2,7 +2,6 @@ import network
 import time
 from . import board
 import uasyncio
-import select
 from . import config
 
 httpOK = b'HTTP/1.1 200'
@@ -27,7 +26,7 @@ def connect():
         time.sleep(0.3)
         board.led.off()
         time.sleep(0.7)
-        
+
     if wlan.status() != 3:
         uasyncio.run(board.led.flash(100, 0, 0, times=5, seconds=0.3))
         raise RuntimeError('wifi connection failed')
@@ -35,5 +34,5 @@ def connect():
         status = wlan.ifconfig()
         print('wifi connected! ip = ' + status[0] )
         uasyncio.run(board.led.flash(0, 0, 50, times=2))
-        
+
 

@@ -14,7 +14,7 @@ class Response:
                     outfile.write(data)
                     data = self._socket.read(CHUNK_SIZE)
                 outfile.close()
-                
+
             self.close()
 
     def close(self):
