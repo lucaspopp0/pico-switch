@@ -4,25 +4,25 @@ from .httpclient import HttpClient
 def isGreater(version1, version2):
     def parse(version):
         return list(map(lambda x : int(x), version.strip('v').split('.')))
-    
+
     v1 = parse(version1)
     v2 = parse(version2)
-    
+
     if v1[0] > v2[0]:
         return True
-    
+
     if v1[0] < v2[0]:
         return False
-    
+
     if v1[1] > v2[1]:
         return True
-    
+
     if v1[1] < v2[1]:
         return False
-    
+
     if v1[2] > v2[2]:
         return True
-    
+
     return False
 
 class OTAUpdater:
@@ -45,11 +45,11 @@ class OTAUpdater:
 
     def check_for_update_to_install_during_next_reboot(self) -> bool:
         """Function which will check the GitHub repo if there is a newer version available.
-        
-        This method expects an active internet connection and will compare the current 
+
+        This method expects an active internet connection and will compare the current
         version with the latest version available on GitHub.
-        If a newer version is available, the file 'next/.version' will be created 
-        and you need to call machine.reset(). A reset is needed as the installation process 
+        If a newer version is available, the file 'next/.version' will be created
+        and you need to call machine.reset(). A reset is needed as the installation process
         takes up a lot of memory (mostly due to the http stack)
 
         Returns
@@ -67,9 +67,9 @@ class OTAUpdater:
 
     def install_update_if_available_after_boot(self, ssid, password) -> bool:
         """This method will install the latest version if out-of-date after boot.
-        
-        This method, which should be called first thing after booting, will check if the 
-        next/.version' file exists. 
+
+        This method, which should be called first thing after booting, will check if the
+        next/.version' file exists.
 
         - If yes, it initializes the WIFI connection, downloads the latest version and installs it
         - If no, the WIFI connection is not initialized as no new known version is available
@@ -82,15 +82,15 @@ class OTAUpdater:
                 OTAUpdater._using_network(ssid, password)
                 self.install_update_if_available()
                 return True
-            
+
         print('No new updates found...')
         return False
 
     def install_update_if_available(self) -> bool:
         """This method will immediately install the latest version if out-of-date.
-        
+
         This method expects an active internet connection and allows you to decide yourself
-        if you want to install the latest version. It is necessary to run it directly after boot 
+        if you want to install the latest version. It is necessary to run it directly after boot
         (for memory reasons) and you need to restart the microcontroller if a new version is found.
 
         Returns
@@ -107,7 +107,7 @@ class OTAUpdater:
             self._delete_old_version()
             self._install_new_version()
             return True
-        
+
         return False
 
 
@@ -166,7 +166,7 @@ class OTAUpdater:
 
     def _download_all_files(self, version, sub_dir=''):
         url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
-        gc.collect() 
+        gc.collect()
         file_list = self.http_client.get(url)
         file_list_json = file_list.json()
         for file in file_list_json:
@@ -266,7 +266,7 @@ class OTAUpdater:
         try:
             os.mkdir(path)
         except OSError as exc:
-            if exc.args[0] == 17: 
+            if exc.args[0] == 17:
                 pass
 
 
