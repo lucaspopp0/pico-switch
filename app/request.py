@@ -4,6 +4,9 @@ import time
 from . import sockets
 from . import constants
 
+def urlencode(txt):
+    return txt.replace(' ', '%20')
+
 class RequestQueue:
 
     def __init__(self):
@@ -35,7 +38,7 @@ class RequestQueue:
             for req in self.requestsByPath[path]:
                 if req.is_expired():
                     to_prune.append(req)
-                    
+
                     if len(self.requestsByPath[path]) == 1:
                         req.failed()
 
@@ -91,7 +94,7 @@ class Request:
     def is_expired(self):
         if self.expiry is not None:
             return time.time() > self.expiry
-        
+
         return False
 
     def recv(self):

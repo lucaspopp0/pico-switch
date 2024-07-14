@@ -1,7 +1,6 @@
 from machine import Pin, PWM, Timer
 import time
 import uasyncio
-from . import hooks
 from . import request
 from . import config
 from . import wheel
@@ -26,7 +25,7 @@ def pwmFreq(perc):
 def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs
 
-    req = request.Request('remote-press?remote=' + hooks.urlencode(config.value["name"]) + '&button=' + str(key))
+    req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(key))
     def on_success(response):
         if flash_progress:
             led.off()
@@ -134,7 +133,7 @@ class RgbLed:
             time.sleep(seconds)
 
 def keypress(num):
-    req = request.Request('remote-press?remote=' + hooks.urlencode('New Bedroom') + '&button=' + str(num))
+    req = request.Request('remote-press?remote=' + request.urlencode('New Bedroom') + '&button=' + str(num))
 
     def inner():
         print("sending")
