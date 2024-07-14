@@ -1,2 +1,1 @@
-import .server
-import .utils
+from . import server, utils
