@@ -13,6 +13,7 @@ class RequestQueue:
         self.requestsByPath = {}
 
     def requestBySocket(self, sock):
+        print(sock.makefile().fileno())
         for path in self.requestsByPath:
             for req in self.requestsByPath[path]:
                 if req.socket == sock:
