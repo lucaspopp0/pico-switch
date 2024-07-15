@@ -126,10 +126,6 @@ class OTAUpdater:
     def _check_for_new_version(self):
         current_version = self.get_version(self.modulepath(self.main_dir))
         latest_version = self.get_latest_version()
-
-        print('Checking version... ')
-        print('\tCurrent version: ', current_version)
-        print('\tLatest version: ', latest_version)
         return (current_version, latest_version)
 
     def _create_new_version_file(self, latest_version):

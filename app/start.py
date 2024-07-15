@@ -18,7 +18,7 @@ def tryUpdate():
             headers["X-GitHub-Api-Version"] = "2022-11-28"
 
         otaUpdater = OTAUpdater('https://github.com/lucaspopp0/pico-switch', main_dir='app')
-        board.led.do_color(10, 10, 10)
+        board.led.do_color(5, 1, 0)
 
         if otaUpdater.install_update_if_available():
             machine.reset()

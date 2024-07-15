@@ -5,8 +5,8 @@ _dir = "app"
 _last_restart_file_name = ".last-restart"
 
 _last_restart_day = 0
-_check_ticker = 0
 _check_ticker_interval = 80
+_check_ticker = _check_ticker_interval
 
 def should_check_update():
     (_, _, day, hour, _, _, _, _) = time.localtime()
@@ -24,11 +24,13 @@ def last_update():
     _check_ticker += 1
     if _check_ticker < _check_ticker_interval:
         return _last_restart_day
-
+    
     if _last_restart_file_name in os.listdir(_dir):
         with open(_dir + '/' + _last_restart_file_name) as f:
+            _check_ticker = 0
             _last_restart_day = int(f.read())
             return _last_restart_day
+        
     return -1
 
 def record_update(day):
