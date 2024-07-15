@@ -1,29 +1,22 @@
-def connectToWifiAndUpdate():
-    import time, machine, network, gc
+from . import config
+config.read()
+config.read_version()
+
+from . import board, wifi
+board.setup()
+
+def tryUpdate():
+    import machine, gc
 
     try:
-        import app.config as config
-        config.read()
-
-        import app.board as board
-        board.setup()
-        board.led.do_color(10, 10, 10)
-    except Exception as e:
-        print(e)
-
-    try:
-        from app.ota_updater.ota_updater import OTAUpdater
-        import app.board as board
-        import app.wifi as wifi
-        import app.config as config
-        config.read()
+        from .ota_updater.ota_updater import OTAUpdater
+        from . import board
 
         headers = {}
         if "github-token" in config.value:
             headers["Authorization"] = "Bearer " + str(config.value["github-token"])
             headers["X-GitHub-Api-Version"] = "2022-11-28"
 
-        wifi.connect()
         otaUpdater = OTAUpdater('https://github.com/lucaspopp0/pico-switch', main_dir='app')
         board.led.do_color(10, 10, 10)
 
@@ -38,16 +31,12 @@ def connectToWifiAndUpdate():
 def startApp():
     print('Starting app')
 
-    from . import wifi
-    from . import board
-    from . import config
+    wifi.connect()
+    board.led.off()
+
+    from . import update_manager
     from . import routes
     from .server import server
-
-    config.read_version()
-    config.read()
-    board.setup()
-    board.led.off()
 
     svr = server.Server()
     routes.setup_routes(svr)
@@ -57,8 +46,7 @@ def startApp():
         board.request_queue.poll()
         svr.poll()
 
+        if update_manager.should_check_update():
+            tryUpdate()
 
-connectToWifiAndUpdate()
 startApp()
-
-
