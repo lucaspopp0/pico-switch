@@ -36,7 +36,7 @@ def startApp():
 
     from . import update_manager
     from . import routes
-    from .server import server
+    from . import server
 
     svr = server.Server()
     routes.setup_routes(svr)

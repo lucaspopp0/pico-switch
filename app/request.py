@@ -55,7 +55,7 @@ class RequestQueue:
         req = self.requestBySocket(out[0][0])
 
         if req is None:
-            print("closing unknown socket")
+            print("socket in queue has data, but could not tie it to a request")
             out[0][0].close()
             return
 
@@ -81,7 +81,7 @@ class Request:
 
     def send(self, queue):
         if self.socket is not None:
-            print("Too soon")
+            return
 
         self.socket = sockets.new_socket()
         queue.add(self)
@@ -110,16 +110,19 @@ class Request:
         print('Request succeeded: ' + resp)
         if self.on_success is not None:
             self.on_success(resp)
+        self.close()
 
     def failed(self):
         err = parse_response(str(self.response))
         print('Request failed: ' + err)
         if self.on_failure is not None:
             self.on_failure(err)
+        self.close()
 
     def close(self):
-        self.socket.close()
-        self.socket = None
+        if self.socket is not None:
+            self.socket.close()
+            self.socket = None
 
 def parse_response(response):
     ind = response.find("\r")
