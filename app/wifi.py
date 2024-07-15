@@ -3,6 +3,7 @@ import time
 from . import board
 import uasyncio
 from . import config
+from .lib import nptime
 
 httpOK = b'HTTP/1.1 200'
 
@@ -33,6 +34,7 @@ def connect():
     else:
         status = wlan.ifconfig()
         print('wifi connected! ip = ' + status[0] )
+        nptime.settime()
         uasyncio.run(board.led.flash(0, 0, 50, times=2))
 
 
