@@ -1,11 +1,18 @@
-from .task import Task
+from .task import Task, HttpTask
 
 class Updater:
 
-    def __init__(self):
-        self._check_for_updates_task = Task()
+    def __init__(self, github_repo, app_dir='app', headers={}):
+        self.github_repo = github_repo.rstrip('/').replace('https://github.com/', '')
+        self.app_dir = app_dir
+        self.headers = headers
+
+        self._check_for_updates_task = HttpTask(
+            'https://api.github.com/repos/{}/releases/latest'.format(self.github_repo),
+            headers=headers,
+        )
         self._update_summary_task = Task()
-        self._list_files_task = Task()
+        self._list_files_task = HttpTask('')
         self._file_tasks = [] # (task, path, socket)
 
     def _should_update(self):
@@ -43,14 +50,17 @@ class Updater:
             pass
 
     def _check_for_updates(self):
-        if self._update_summary_task.in_progress():
-
+        if self._update_summary_task.started:
+            return
         elif self._check_for_updates_task.in_progress():
             # TODO: poll for respose until done
             # then, begin download task
-            pass
+            pass# url = 'https://api.github.com/repos/{}/contents{}{}?ref=refs/tags/{}'.format(self.github_repo, self.main_dir, sub_dir, version)
+        # print(url)
         elif self._should_update:
-
+            self._update_summary_task.started = True
+            # start the update
+            pass
         elif self._should_check_for_updates:
             # TODO: start task
             self._check_for_updates_task.started = True
