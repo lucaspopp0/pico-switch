@@ -22,6 +22,8 @@ def tryUpdate():
 
         if otaUpdater.install_update_if_available():
             machine.reset()
+        else:
+            board.led.off()
 
         del(otaUpdater)
         gc.collect()
@@ -46,7 +48,7 @@ def startApp():
         board.request_queue.poll()
         svr.poll()
 
-        if update_manager.should_check_update():
+        if True:
             tryUpdate()
 
 startApp()
