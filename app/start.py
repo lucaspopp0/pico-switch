@@ -48,7 +48,7 @@ def startApp():
         board.request_queue.poll()
         svr.poll()
 
-        if True:
+        if update_manager.should_check_update():
             tryUpdate()
 
 startApp()
