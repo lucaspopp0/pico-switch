@@ -51,7 +51,7 @@ class Server:
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.bind((self._host, self._port))
         self._sock.listen(1)
-        print("Server start")
+        print("Server listening on :%d" % self._port)
             
     
     def poll(self):
