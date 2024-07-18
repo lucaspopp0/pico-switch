@@ -1,4 +1,5 @@
 import os, gc
+from time import sleep
 from .httpclient import HttpClient
 
 def isGreater(version1, version2):
@@ -31,7 +32,8 @@ class OTAUpdater:
     optimized for low power usage.
     """
 
-    def __init__(self, github_repo, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
+    def __init__(self, led, github_repo, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
+        self.led = led
         self.http_client = HttpClient(headers=headers)
         self.github_repo = github_repo.rstrip('/').replace('https://github.com/', '')
         self.github_src_dir = '' if len(github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
@@ -101,11 +103,13 @@ class OTAUpdater:
         (current_version, latest_version) = self._check_for_new_version()
         if isGreater(latest_version, current_version):
             print('Updating to version {}...'.format(latest_version))
+            self.led.do_color(5, 1, 0)
             self._create_new_version_file(latest_version)
             self._download_new_version(latest_version)
             self._copy_secrets_file()
             self._delete_old_version()
             self._install_new_version()
+            self.led.off()
             return True
 
         return False
@@ -157,7 +161,14 @@ class OTAUpdater:
 
     def _download_new_version(self, version):
         print('Downloading version {}'.format(version))
-        self._download_all_files(version)
+
+        for _ in range(5):
+            try:
+                self._download_all_files(version)
+                break
+            except:
+                continue
+
         print('Version {} downloaded to {}'.format(version, self.modulepath(self.new_version_dir)))
 
     def _download_all_files(self, version, sub_dir=''):
@@ -168,12 +179,17 @@ class OTAUpdater:
         for file in file_list_json:
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
+                self.led.do_color(5, 1, 0)
                 gitPath = file['path']
                 print('\tDownloading: ', gitPath, 'to', path)
                 self._download_file(version, gitPath, path)
+                self.led.off()
+                sleep(0.05)
             elif file['type'] == 'dir':
                 print('Creating dir', path)
+                self.led.do_color(5, 1, 0)
                 self.mkdir(path)
+                self.led.off()
                 self._download_all_files(version, sub_dir + '/' + file['name'])
             gc.collect()
 

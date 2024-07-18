@@ -22,7 +22,7 @@ def connect():
             break
         max_wait -= 1
         print('waiting for wifi...')
-        board.led.do_color(100, 100, 0)
+        board.led.do_color(50, 50, 0)
         time.sleep(0.3)
         board.led.off()
         time.sleep(0.7)
@@ -34,5 +34,3 @@ def connect():
         status = wlan.ifconfig()
         print('wifi connected! ip = ' + status[0] )
         uasyncio.run(board.led.flash(0, 0, 50, times=2))
-
-
