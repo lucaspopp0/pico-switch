@@ -1,0 +1,43 @@
+name: pr
+
+on:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - reopened
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      tag-and-release: ${{ steps.changes.outputs.tag-and-release }}
+    steps:
+      -
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      -
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            tag-and-release:
+              - '.github/workflows/tag-and-release.yaml'
+
+  preview-release:
+    needs: setup
+    if: ${{ needs.setup.outputs.tag-and-release == 'true' }}
+    uses: ./.github/workflows/tag-and-release.yaml
