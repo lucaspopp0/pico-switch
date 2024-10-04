@@ -3,9 +3,8 @@ import time
 import uasyncio
 from . import request
 from . import config
-from . import wheel
-from .switch import Switch
-from . import constants
+
+longpress_ms = 1500
 
 is_setup = False
 
@@ -88,7 +87,7 @@ class Button:
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=constants.longpress_ms, callback=lpc)
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
                 now = time.ticks_ms()
                 self.last_press_time = now
                 self.action()
@@ -131,6 +130,136 @@ class RgbLed:
             time.sleep(seconds)
             self.off()
             time.sleep(seconds)
+class Routine:
+
+    def __init__(self, name, color, button):
+        self.name = name
+        self.color = color
+        self.button = button
+
+class Wheel:
+
+    def __init__(self, led, clk, dt, sw, handle_press, options):
+        self.led = led
+        self.handle_press = handle_press
+        self.clk = Pin(clk, Pin.IN)
+        self.dt = Pin(dt, Pin.IN)
+        self.sw = Pin(sw, Pin.IN, Pin.PULL_UP)
+        self.options = options
+        self.enabled = True
+
+        self.currentA = 0
+        self.lastA = 0
+        self.size = len(options)
+        self.value = 0
+
+        self.last_pressed = False
+        self.pressed = False
+        self.longPressTimer = Timer()
+
+        self.clk.irq(lambda p:self._rotated())
+        self.sw.irq(lambda p:self._pressed())
+
+        self.timer = None
+        self._flash_color()
+        self._reset_timer()
+
+    def current_option(self):
+        return self.options[self.value]
+
+    def _led_off(self):
+        self.led.off()
+
+    def _reset_timer(self):
+        if self.timer != None:
+            self.timer.deinit()
+            self.timer = None
+
+        self.timer = Timer(mode=Timer.ONE_SHOT, period=1000, callback=lambda t: self._led_off())
+
+
+    def _rotated(self):
+        a = self.clk.value()
+        b = self.dt.value()
+
+        self.lastA = self.currentA
+        self.currentA = a
+
+        if a == 0:
+            return
+
+        if not self.enabled:
+            print("Not enabled")
+            return
+
+        if self.currentA == self.lastA:
+            return
+
+        if a == b:
+            self.value = self.value + 1
+        else:
+            self.value = self.value - 1
+
+        self.value = self.value % self.size
+
+        print("scrolled to: " + self.options[self.value].name)
+
+        self._flash_color()
+        self._reset_timer()
+
+    def _pressed(self):
+        self.last_pressed = self.pressed
+        # check equal to zero due to using PULL_UP resistor
+        self.pressed = self.sw.value() == 0
+
+        if self.pressed != self.last_pressed:
+            if self.pressed:
+                print("pressed: " + self.current_option().name)
+                def lpc(t):
+                    self._long_action()
+
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                self._send_hook()
+
+    def _long_action(self):
+        if self.pressed:
+            self._send_hook(True)
+
+    def _send_hook(self, long=False):
+        self.timer.deinit()
+        self._flash_color()
+
+        name = self.current_option().name
+        if long:
+            name = name + '-long'
+
+        self.handle_press(name, long, flash_progress=False)()
+        self._reset_timer()
+
+    def _flash_color(self):
+        color = self.current_option().color
+        self.led.do_color(color[0], color[1], color[2])
+
+class Switch:
+    
+    def __init__(self, powerPin, switchPin, callbacks):
+        self.powerPin = Pin(powerPin, Pin.OUT)
+        self.switchPin = Pin(switchPin, Pin.IN)
+        self.callbacks = callbacks
+        
+        self.powerPin.value(1)
+        
+        def _callback(pin):
+            self.callback(pin.value())
+        
+        self.switchPin.irq(_callback)
+        
+    def callback(self, value):
+        if value:
+            self.callbacks["on"]()
+        else:
+            self.callbacks["off"]()
+
 
 def keypress(num):
     req = request.Request('remote-press?remote=' + request.urlencode('New Bedroom') + '&button=' + str(num))
@@ -184,10 +313,10 @@ def setup():
 
         if config.value["wheel-routines"]:
             for routine in config.value["wheel-routines"]:
-                scene = wheel.Routine(routine["name"], routine["rgb"], 0)
+                scene = Routine(routine["name"], routine["rgb"], 0)
                 dialScenes.append(scene)
 
-        dial = wheel.Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+        dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
         buttonON = Button([13, 14], 'on')
         buttonOFF = Button([0, 2], 'off')
         button1 = Button([15], 5)
@@ -201,10 +330,10 @@ def setup():
 
         if config.value["wheel-routines"]:
             for routine in config.value["wheel-routines"]:
-                scene = wheel.Routine(routine["name"], routine["rgb"], 0)
+                scene = Routine(routine["name"], routine["rgb"], 0)
                 dialScenes.append(scene)
 
-        dial = wheel.Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+        dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
         buttonON = Button([13, 14], 'on')
         buttonOFF = Button([0, 2], 'off')
         button1 = Button([15], 5)

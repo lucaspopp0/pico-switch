@@ -1,7 +1,18 @@
 import select
 import time
-from . import sockets
-from . import constants
+import socket
+from . import config
+
+request_timeout_s = 5
+socket_connect_s = 2
+
+homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"], 8123)[0][-1]
+
+def new_socket():
+    s = socket.socket()
+    s.settimeout(socket_connect_s)
+    s.connect(homeAddr)
+    return s
 
 def urlencode(txt):
     return txt.replace(' ', '%20')
@@ -83,11 +94,11 @@ class Request:
         if self.socket is not None:
             return
 
-        self.socket = sockets.new_socket()
+        self.socket = new_socket()
         queue.add(self)
         raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
         print('Sending: ' + self.path)
-        self.expiry = time.time() + constants.request_timeout_s
+        self.expiry = time.time() + request_timeout_s
         self.socket.send(raw)
 
     def is_expired(self):
