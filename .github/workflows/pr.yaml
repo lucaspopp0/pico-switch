@@ -6,7 +6,7 @@ on:
       - '.github/workflows/tag-and-release.yaml'
 
 permissions:
-  contents: read
+  contents: write
 
 defaults:
   run:
