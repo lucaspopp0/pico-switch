@@ -17,3 +17,4 @@ jobs:
       change-filters: |
         app:
           - 'app/**'
+      dry-run: ${{ github.event_name != 'push' }}
