@@ -11,7 +11,7 @@ permissions:
 jobs:
 
   tag-and-release:
-    uses: lucaspopp0/workflows/.github/workflows/tag-and-release.yml@v1
+    uses: lucaspopp0/workflows/.github/workflows/tag-and-release.yml@tag-and-release-fix
     with:
       change-filters: |
         app:
