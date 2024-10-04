@@ -2,8 +2,10 @@ name: pr
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/tag-and-release.yaml'
+    types:
+      - synchronize
+      - opened
+      - reopened
 
 permissions:
   contents: write
@@ -14,5 +16,24 @@ defaults:
 
 jobs:
 
-  validate-tag-and-release:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      tag-and-release: ${{ steps.changes.outputs.tag-and-release_changed }}
+    steps:
+      -
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      -
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            tag-and-release:
+              - '.github/workflows/tag-and-release.yaml'
+
+  preview-release:
+    needs: setup
+    if: ${{ needs.setup.outputs.tag-and-release == 'true' }}
     uses: ./.github/workflows/tag-and-release.yaml
