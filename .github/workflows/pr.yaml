@@ -23,7 +23,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      tag-and-release: ${{ steps.changes.outputs.tag-and-release_changed }}
+      tag-and-release: ${{ steps.changes.outputs.tag-and-release }}
     steps:
       -
         uses: actions/checkout@v4
