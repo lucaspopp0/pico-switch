@@ -1,6 +1,7 @@
 from machine import Pin, PWM, Timer
 import time
 import uasyncio
+import errno
 from . import request
 from . import config
 
@@ -16,7 +17,12 @@ dial = None
 
 switch = None
 
-accepting_inputs = True
+accepting_inputs = False
+
+def _set_wifi_connected(connected):
+    pass
+
+set_wifi_connected = _set_wifi_connected
 
 def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
@@ -49,9 +55,14 @@ def _buttonAction(key, long=False, flash_progress=True):
 
         try:
             req.send(request_queue)
-        except OSError as e:
-            print("Failed to send: " + str(e))
+        except OSError as oserr:
+            print("Failed to send: " + str(oserr))
+            
             req.failed()
+            
+            if oserr.args[0] == errno.EHOSTUNREACH:
+                set_wifi_connected(False)
+            
 
     return act
 
