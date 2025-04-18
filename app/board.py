@@ -371,6 +371,20 @@ def setup():
             "on": _on,
             "off": _off
         })
+    
+    elif config.value["layout"] == "v7":
+        led = RgbLed(18, 19, 20)
+        
+        buttonON = Button([10, 9], 'on')
+        buttonOFF = Button([5, 4], 'off')
+        button1 = Button([12], 1)
+        button2 = Button([11], 2)
+        button3 = Button([7], 3)
+        button4 = Button([8], 4)
+        button5 = Button([0], 5)
+        button6 = Button([3], 6)
+        button7 = Button([1], 7)
+        button8 = Button([2], 8)
 
     else:
         print("Unexpected config layout: " + str(config.value["layout"]))
