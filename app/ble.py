@@ -28,22 +28,22 @@ _conn_handle = None
 _service = None
 
 def _get_type_value():
-    return "Smart Switch"
+    return "type: Smart Switch"
 
 def _get_name_value():
-    return config.value["name"] or DEVICE_NAME
+    return "name: " + config.value["name"] or DEVICE_NAME
 
 def _get_layout_value():
-    return config.value["layout"]
+    return "layout: " + config.value["layout"]
 
 def _get_version_value():
-    return str(config.version)
+    return "version: " + str(config.version)
 
 def _get_ip_value():
-    return wifi.current_ip
+    return "ip: " + wifi.current_ip
 
 def _get_ha_ip_value():
-    return config.value["home-assistant-ip"]
+    return "ha-ip: " + config.value["home-assistant-ip"]
 
 async def _start_advertising():
     """Start advertising our BLE service."""
