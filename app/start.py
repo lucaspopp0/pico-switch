@@ -52,6 +52,11 @@ def startApp():
     from . import update_manager
     from . import routes
     from .server import server
+    from . import ble
+
+    # Initialize and start BLE advertising
+    ble.init()
+    ble.start_advertising()
 
     svr = server.Server()
     routes.setup_routes(svr)
