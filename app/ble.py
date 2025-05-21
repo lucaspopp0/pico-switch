@@ -149,4 +149,11 @@ async def _ble_server_task():
                 # Resume advertising after disconnection
                 await _start_advertising()
         except Exception as e:
-            print("BLE erro
+            print("BLE error:", e)
+            # Brief delay before retrying
+            await asyncio.sleep(1)
+
+async def start_ble_server():
+    """Initialize and start the BLE server in a background task."""
+    asyncio.run(_ble_server_task())
+    print("BLE server started in background")
