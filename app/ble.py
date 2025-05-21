@@ -45,18 +45,6 @@ def _get_ip_value():
 def _get_ha_ip_value():
     return "ha-ip: " + config.value["home-assistant-ip"]
 
-async def _start_advertising():
-    """Start advertising our BLE service."""
-    device_name = "Smart Switch (" + (config.value["name"] or DEVICE_NAME) + ")"
-    print(f"Starting BLE advertising as '{device_name}'")
-    
-    await aioble.advertise(
-        interval_us=_ADV_INTERVAL_US,
-        name=device_name,
-        services=[DEVICE_SERVICE_UUID],
-        timeout_ms=0,
-    )
-
 async def _ble_server_task():
     """Main BLE server task."""
     global _server, _conn_handle, _service
@@ -128,26 +116,21 @@ async def _ble_server_task():
     
     print("BLE services registered")
     
-    # Start advertising
-    await _start_advertising()
-    
     # Main connection loop
     while True:
         try:
-            # Wait for a connection
-            connection = await aioble.wait_for_connection()
-            print("BLE client connected:", connection.device)
-            _conn_handle = connection
+            """Start advertising our BLE service."""
+            device_name = "Smart Switch (" + (config.value["name"] or DEVICE_NAME) + ")"
+            print(f"Starting BLE advertising as '{device_name}'")
             
-            try:
-                # Wait for disconnection
-                await connection.disconnected()
-            finally:
-                print("BLE client disconnected")
-                _conn_handle = None
-                
-                # Resume advertising after disconnection
-                await _start_advertising()
+            async with await aioble.advertise(
+                interval_us=_ADV_INTERVAL_US,
+                name=device_name,
+                services=[DEVICE_SERVICE_UUID],
+                timeout_ms=0,
+            ) as connection:
+                print("Connection from", connection.device)
+                await connection.disconnected(timeout_ms=None)
         except Exception as e:
             print("BLE error:", e)
             # Brief delay before retrying
