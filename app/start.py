@@ -52,10 +52,14 @@ def startApp():
     from . import update_manager
     from . import routes
     from .server import server
+    from . import ble
 
     svr = server.Server()
     routes.setup_routes(svr)
     svr.start()
+    
+    # Start BLE server
+    ble.start_ble_server()
 
     while True:
         if not wifi.is_connected() and wifi.can_check:
