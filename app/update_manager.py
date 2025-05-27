@@ -37,3 +37,27 @@ def record_update(day):
     with open(_dir + '/' + _last_restart_file_name, 'w') as last_restart_file:
         last_restart_file.write(str(day))
         last_restart_file.close()
+
+def try_update():
+    import machine, gc
+
+    try:
+        from .ota_updater.ota_updater import OTAUpdater
+        from . import board, config
+
+        headers = {}
+        if "github-token" in config.value:
+            headers["Authorization"] = "Bearer " + str(config.value["github-token"])
+            headers["X-GitHub-Api-Version"] = "2022-11-28"
+
+        otaUpdater = OTAUpdater(board.led, 'https://github.com/lucaspopp0/pico-switch', main_dir='app')
+
+        if otaUpdater.install_update_if_available():
+            machine.reset()
+        else:   
+            board.led.off()
+
+        del(otaUpdater)
+        gc.collect()
+    except Exception as e:
+        print(e)

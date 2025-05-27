@@ -2,10 +2,11 @@ from machine import Pin, PWM, Timer
 import time
 import uasyncio
 import errno
-from . import request
-from . import config
+
+from . import request, config, update_manager
 
 longpress_ms = 1500
+update_longpress_ms = 5000
 
 is_setup = False
 
@@ -18,6 +19,7 @@ dial = None
 switch = None
 
 accepting_inputs = False
+preparing_update = False
 
 def _set_wifi_connected(connected):
     pass
@@ -68,13 +70,15 @@ def _buttonAction(key, long=False, flash_progress=True):
 
 class Button:
 
-    def __init__(self, pins, key):
+    def __init__(self, pins, key, board):
+        self.board = board
         self.pins = pins
         self.gpios = list(map(lambda pin : Pin(pin, Pin.IN, Pin.PULL_UP), pins))
         self.last_pressed = False
         self.pressed = False
         self.last_press_time = time.ticks_ms()
         self.longPressTimer = Timer()
+        self.key = key
 
         self.action = _buttonAction(key)
         self.long = _buttonAction(str(key) + '-long', long=True)
@@ -95,14 +99,18 @@ class Button:
 
         if self.pressed != self.last_pressed:
             if self.pressed:
+                self.board._button_press(self)
+
                 def lpc(t):
                     self._long_action()
 
                 self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                
                 now = time.ticks_ms()
                 self.last_press_time = now
                 self.action()
             else:
+                self.board._button_unpress(self)
                 self._long_action()
 
 
@@ -141,6 +149,7 @@ class RgbLed:
             time.sleep(seconds)
             self.off()
             time.sleep(seconds)
+
 class Routine:
 
     def __init__(self, name, color, button):
@@ -272,119 +281,203 @@ class Switch:
             self.callbacks["off"]()
 
 
-def keypress(num):
-    req = request.Request('remote-press?remote=' + request.urlencode('New Bedroom') + '&button=' + str(num))
 
-    def inner():
-        print("sending")
-        req.send(request_queue)
+class Board:
 
-    return inner
+    def __init__(self, layout):
+        self.layout = layout
+        self.buttons = None
+        self.dial = None
+        self.switch = None
 
-def longpress(num):
-    return keypress(str(num) + "-long")
+        self._pressed = {}
+        self._update_press_timer = Timer()
+        
+        self._should_update = False
+
+        if layout == "v4":
+            self.led = RgbLed(16, 17, 18)
+            self.buttons = {
+                "on": Button([9, 6], 'on', self),
+                "off": Button([3, 2], 'off', self),
+                "1": Button([10], 1, self),
+                "2": Button([11], 2, self),
+                "3": Button([8], 3, self),
+                "4": Button([7], 4, self),
+                "5": Button([5], 5, self),
+                "6": Button([4], 6, self),
+                "7": Button([1], 8, self),
+                "8": Button([0], 7, self),
+            }
+        elif layout == "v3":
+            self.led = RgbLed(18, 17, 16)
+            self.buttons = {
+                "on": Button([0, 5], 'on', self),
+                "off": Button([10, 15], 'off', self),
+                "1": Button([28], 1, self),
+                "2": Button([11], 2, self),
+                "3": Button([6], 3, self),
+                "4": Button([1], 4, self),
+                "5": Button([27], 5, self),
+                "6": Button([12], 6, self),
+                "7": Button([7], 7, self),
+                "8": Button([2], 8, self),
+                "9": Button([26], 9, self),
+                "10": Button([13], 10, self),
+                "11": Button([8], 11, self),
+                "12": Button([3], 12, self),
+            }
+        elif layout == "v5":
+            led = RgbLed(16, 17, 18)
+
+            dialScenes = []
+
+            if config.value["wheel-routines"]:
+                for routine in config.value["wheel-routines"]:
+                    scene = Routine(routine["name"], routine["rgb"], 0)
+                    dialScenes.append(scene)
+
+            self.dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+            self.buttons = {
+                "on": Button([13, 14], 'on', self),
+                "off": Button([0, 2], 'off', self),
+                "5": Button([15], 5, self),
+                "6": Button([12], 6, self),
+                "7": Button([11], 7, self),
+                "8": Button([1], 8, self),
+            }
+        elif layout == "v6":
+            led = RgbLed(16, 17, 18)
+
+            dialScenes = []
+
+            if config.value["wheel-routines"]:
+                for routine in config.value["wheel-routines"]:
+                    scene = Routine(routine["name"], routine["rgb"], 0)
+                    dialScenes.append(scene)
+
+            self.dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+            self.buttons = {
+                "on": Button([13, 14], 'on', self),
+                "off": Button([0, 2], 'off', self),
+                "5": Button([15], 5, self),
+                "6": Button([12], 6, self),
+                "7": Button([11], 7, self),
+                "8": Button([1], 8, self),
+            }
+
+            def _on():
+                global accepting_inputs, dial
+                print("Accepting inputs")
+                accepting_inputs = True
+                if dial is not None:
+                    dial.enabled = True
+
+            def _off():
+                global accepting_inputs, dial
+                print("Not accepting inputs")
+                accepting_inputs = False
+                if dial is not None:
+                    dial.enabled = False
+
+
+            self.switch = Switch(27, 28, {
+                "on": _on,
+                "off": _off
+            })
+        
+        elif layout == "v7":
+            led = RgbLed(18, 19, 20)
+            
+            self.buttons = {
+                "on": Button([10, 9], 'on', self),
+                "off": Button([5, 4], 'off', self),
+                "1": Button([12], 1, self),
+                "2": Button([11], 2, self),
+                "3": Button([7], 3, self),
+                "4": Button([8], 4, self),
+                "5": Button([0], 5, self),
+                "6": Button([3], 6, self),
+                "7": Button([1], 7, self),
+                "8": Button([2], 8, self),
+            }
+
+        else:
+            print("Unexpected config layout: " + str(layout))
+
+    def _button_press(self, button):
+        global accepting_inputs, preparing_update
+        
+        print("Pressed " + str(button.key))
+        
+        if not accepting_inputs:
+            return
+        
+        self._pressed[str(button.key)] = True
+
+        self._update_press_timer.deinit()
+
+        def upc(t):
+            self._try_update()
+            print("No updates")
+        
+        self._update_press_timer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
+        
+        self._should_update = self._could_update()
+        
+        if self._should_update:
+            accepting_inputs = False
+            preparing_update = True
+        
+
+    def _button_unpress(self, button):
+        global accepting_inputs, preparing_update
+        
+        del self._pressed[str(button.key)]
+        
+        self._should_update = self._could_update()
+        if preparing_update and not self._should_update:
+            accepting_inputs = True
+            
+        
+    def _could_update(self):
+        required_buttons = []
+        if self.layout == "v4" or self.layout == "v7":
+            required_buttons = ["1", "on", "7", "off"]
+        elif self.layout == "v3":
+            required_buttons = ["1", "on", "7", "off"]
+        elif self.layout == "v5":
+            required_buttons = ["5", "on", "8", "off"]
+        elif self.layout == "v6":
+            required_buttons = ["5", "on", "8", "off"]
+        elif self.layout == "v7":
+            required_buttons = ["1", "on", "7", "off"]
+
+        else:
+            print("Unexpected config layout: " + self.layout)
+
+        should_update = True
+        for button in required_buttons:
+            if not button in self._pressed:
+                should_update = False
+                break
+            
+        return should_update
+
+    def _try_update(self):
+        if self._could_update():
+            print("Checking for updates...")
+            update_manager.try_update()
+                
 
 def setup():
     global led, is_setup, dial, switch, accepting_inputs
+
     if is_setup:
         return
     is_setup = True
-    if config.value["layout"] == "v4":
-        led = RgbLed(16, 17, 18)
-        buttonON = Button([9, 6], 'on')
-        buttonOFF = Button([3, 2], 'off')
-        button1 = Button([10], 1)
-        button2 = Button([11], 2)
-        button3 = Button([8], 3)
-        button4 = Button([7], 4)
-        button5 = Button([5], 5)
-        button6 = Button([4], 6)
-        button7 = Button([1], 7)
-        button8 = Button([0], 8)
-    elif config.value["layout"] == "v3":
-        led = RgbLed(18, 17, 16)
-        buttonON = Button([0, 5], 'on')
-        buttonOFF = Button([10, 15], 'off')
-        button1 = Button([28], 1)
-        button2 = Button([11], 2)
-        button3 = Button([6], 3)
-        button4 = Button([1], 4)
-        button5 = Button([27], 5)
-        button6 = Button([12], 6)
-        button7 = Button([7], 7)
-        button8 = Button([2], 8)
-        button9 = Button([26], 9)
-        button10 = Button([13], 10)
-        button11 = Button([8], 11)
-        button12 = Button([3], 12)
-    elif config.value["layout"] == "v5":
-        led = RgbLed(16, 17, 18)
 
-        dialScenes = []
-
-        if config.value["wheel-routines"]:
-            for routine in config.value["wheel-routines"]:
-                scene = Routine(routine["name"], routine["rgb"], 0)
-                dialScenes.append(scene)
-
-        dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
-        buttonON = Button([13, 14], 'on')
-        buttonOFF = Button([0, 2], 'off')
-        button1 = Button([15], 5)
-        button2 = Button([12], 6)
-        button3 = Button([11], 7)
-        button4 = Button([1], 8)
-    elif config.value["layout"] == "v6":
-        led = RgbLed(16, 17, 18)
-
-        dialScenes = []
-
-        if config.value["wheel-routines"]:
-            for routine in config.value["wheel-routines"]:
-                scene = Routine(routine["name"], routine["rgb"], 0)
-                dialScenes.append(scene)
-
-        dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
-        buttonON = Button([13, 14], 'on')
-        buttonOFF = Button([0, 2], 'off')
-        button1 = Button([15], 5)
-        button2 = Button([12], 6)
-        button3 = Button([11], 7)
-        button4 = Button([1], 8)
-
-        def _on():
-            global accepting_inputs, dial
-            print("Accepting inputs")
-            accepting_inputs = True
-            if dial is not None:
-                dial.enabled = True
-
-        def _off():
-            global accepting_inputs, dial
-            print("Not accepting inputs")
-            accepting_inputs = False
-            if dial is not None:
-                dial.enabled = False
-
-
-        switch = Switch(27, 28, {
-            "on": _on,
-            "off": _off
-        })
-    
-    elif config.value["layout"] == "v7":
-        led = RgbLed(18, 19, 20)
-        
-        buttonON = Button([10, 9], 'on')
-        buttonOFF = Button([5, 4], 'off')
-        button1 = Button([12], 1)
-        button2 = Button([11], 2)
-        button3 = Button([7], 3)
-        button4 = Button([8], 4)
-        button5 = Button([0], 5)
-        button6 = Button([3], 6)
-        button7 = Button([1], 7)
-        button8 = Button([2], 8)
-
-    else:
-        print("Unexpected config layout: " + str(config.value["layout"]))
+    board = Board(config.value["layout"])
+    led = board.led
+    dial = board.dial
+    switch = board.switch
