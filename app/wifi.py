@@ -10,7 +10,6 @@ httpOK = b'HTTP/1.1 200'
 wlan = network.WLAN(network.STA_IF)
 
 connected = False
-current_ip = None
 
 can_check = True
 
@@ -24,7 +23,7 @@ def is_connected():
     return wlan.isconnected() and connected
 
 def connect():
-    global connected, can_check, can_check_timer, failed_attempts, max_attempts, current_ip
+    global connected, can_check, can_check_timer, failed_attempts, max_attempts
     
     if not can_check:
         return
@@ -59,10 +58,8 @@ def connect():
         failed_attempts = 0
         connected = True
         status = wlan.ifconfig()
-        current_ip = status[0]
-        print('wifi connected! ip = ' + current_ip )
+        print('wifi connected! ip = ' + status[0] )
         uasyncio.run(board.led.flash(0, 0, 50, times=2))
         
     can_check = False
     can_check_timer = Timer().init(mode=Timer.ONE_SHOT, period=5000, callback=check)
-
