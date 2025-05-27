@@ -293,6 +293,122 @@ class Switch:
             self.callbacks["off"]()
 
 
+
+class Board:
+
+    def __init__(self, layout):
+        self.buttons = {}
+
+        if layout == "v4":
+            self.led = RgbLed(16, 17, 18)
+            self.buttons = {
+                "on": Button([9, 6], 'on'),
+                "off": Button([3, 2], 'off'),
+                "1": Button([10], 1),
+                "2": Button([11], 2),
+                "3": Button([8], 3),
+                "4": Button([7], 4),
+                "5": Button([5], 5),
+                "6": Button([4], 6),
+                "7": Button([1], 7),
+                "8": Button([0], 8),
+            }
+        elif layout == "v3":
+            self.led = RgbLed(18, 17, 16)
+            self.buttons = {
+                "on": Button([0, 5], 'on'),
+                "off": Button([10, 15], 'off'),
+                "1": Button([28], 1),
+                "2": Button([11], 2),
+                "3": Button([6], 3),
+                "4": Button([1], 4),
+                "5": Button([27], 5),
+                "6": Button([12], 6),
+                "7": Button([7], 7),
+                "8": Button([2], 8),
+                "9": Button([26], 9),
+                "10": Button([13], 10),
+                "11": Button([8], 11),
+                "12": Button([3], 12),
+            }
+        elif layout == "v5":
+            led = RgbLed(16, 17, 18)
+
+            dialScenes = []
+
+            if config.value["wheel-routines"]:
+                for routine in config.value["wheel-routines"]:
+                    scene = Routine(routine["name"], routine["rgb"], 0)
+                    dialScenes.append(scene)
+
+            self.dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+            self.buttons = {
+                "on": Button([13, 14], 'on'),
+                "off": Button([0, 2], 'off'),
+                "5": Button([15], 5),
+                "6": Button([12], 6),
+                "7": Button([11], 7),
+                "8": Button([1], 8),
+            }
+        elif layout == "v6":
+            led = RgbLed(16, 17, 18)
+
+            dialScenes = []
+
+            if config.value["wheel-routines"]:
+                for routine in config.value["wheel-routines"]:
+                    scene = Routine(routine["name"], routine["rgb"], 0)
+                    dialScenes.append(scene)
+
+            self.dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+            self.buttons = {
+                "on": Button([13, 14], 'on'),
+                "off": Button([0, 2], 'off'),
+                "5": Button([15], 5),
+                "6": Button([12], 6),
+                "7": Button([11], 7),
+                "8": Button([1], 8),
+            }
+
+            def _on():
+                global accepting_inputs, dial
+                print("Accepting inputs")
+                accepting_inputs = True
+                if dial is not None:
+                    dial.enabled = True
+
+            def _off():
+                global accepting_inputs, dial
+                print("Not accepting inputs")
+                accepting_inputs = False
+                if dial is not None:
+                    dial.enabled = False
+
+
+            self.switch = Switch(27, 28, {
+                "on": _on,
+                "off": _off
+            })
+        
+        elif layout == "v7":
+            led = RgbLed(18, 19, 20)
+            
+            self.buttons = {
+                "on": Button([10, 9], 'on'),
+                "off": Button([5, 4], 'off'),
+                "1": Button([12], 1),
+                "2": Button([11], 2),
+                "3": Button([7], 3),
+                "4": Button([8], 4),
+                "5": Button([0], 5),
+                "6": Button([3], 6),
+                "7": Button([1], 7),
+                "8": Button([2], 8),
+            }
+
+        else:
+            print("Unexpected config layout: " + str(config.value["layout"]))
+
 def keypress(num):
     req = request.Request('remote-press?remote=' + request.urlencode('New Bedroom') + '&button=' + str(num))
 
@@ -307,105 +423,12 @@ def longpress(num):
 
 def setup():
     global led, is_setup, dial, switch, accepting_inputs
+    
     if is_setup:
         return
     is_setup = True
-    if config.value["layout"] == "v4":
-        led = RgbLed(16, 17, 18)
-        buttonON = Button([9, 6], 'on')
-        buttonOFF = Button([3, 2], 'off')
-        button1 = Button([10], 1)
-        button2 = Button([11], 2)
-        button3 = Button([8], 3)
-        button4 = Button([7], 4)
-        button5 = Button([5], 5)
-        button6 = Button([4], 6)
-        button7 = Button([1], 7)
-        button8 = Button([0], 8)
-    elif config.value["layout"] == "v3":
-        led = RgbLed(18, 17, 16)
-        buttonON = Button([0, 5], 'on')
-        buttonOFF = Button([10, 15], 'off')
-        button1 = Button([28], 1)
-        button2 = Button([11], 2)
-        button3 = Button([6], 3)
-        button4 = Button([1], 4)
-        button5 = Button([27], 5)
-        button6 = Button([12], 6)
-        button7 = Button([7], 7)
-        button8 = Button([2], 8)
-        button9 = Button([26], 9)
-        button10 = Button([13], 10)
-        button11 = Button([8], 11)
-        button12 = Button([3], 12)
-    elif config.value["layout"] == "v5":
-        led = RgbLed(16, 17, 18)
 
-        dialScenes = []
-
-        if config.value["wheel-routines"]:
-            for routine in config.value["wheel-routines"]:
-                scene = Routine(routine["name"], routine["rgb"], 0)
-                dialScenes.append(scene)
-
-        dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
-        buttonON = Button([13, 14], 'on')
-        buttonOFF = Button([0, 2], 'off')
-        button1 = Button([15], 5)
-        button2 = Button([12], 6)
-        button3 = Button([11], 7)
-        button4 = Button([1], 8)
-    elif config.value["layout"] == "v6":
-        led = RgbLed(16, 17, 18)
-
-        dialScenes = []
-
-        if config.value["wheel-routines"]:
-            for routine in config.value["wheel-routines"]:
-                scene = Routine(routine["name"], routine["rgb"], 0)
-                dialScenes.append(scene)
-
-        dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
-        buttonON = Button([13, 14], 'on')
-        buttonOFF = Button([0, 2], 'off')
-        button1 = Button([15], 5)
-        button2 = Button([12], 6)
-        button3 = Button([11], 7)
-        button4 = Button([1], 8)
-
-        def _on():
-            global accepting_inputs, dial
-            print("Accepting inputs")
-            accepting_inputs = True
-            if dial is not None:
-                dial.enabled = True
-
-        def _off():
-            global accepting_inputs, dial
-            print("Not accepting inputs")
-            accepting_inputs = False
-            if dial is not None:
-                dial.enabled = False
-
-
-        switch = Switch(27, 28, {
-            "on": _on,
-            "off": _off
-        })
-    
-    elif config.value["layout"] == "v7":
-        led = RgbLed(18, 19, 20)
-        
-        buttonON = Button([10, 9], 'on')
-        buttonOFF = Button([5, 4], 'off')
-        button1 = Button([12], 1)
-        button2 = Button([11], 2)
-        button3 = Button([7], 3)
-        button4 = Button([8], 4)
-        button5 = Button([0], 5)
-        button6 = Button([3], 6)
-        button7 = Button([1], 7)
-        button8 = Button([2], 8)
-
-    else:
-        print("Unexpected config layout: " + str(config.value["layout"]))
+    board = Board(config.value["layout"])
+    led = board.led
+    dial = board.dial
+    switch = board.switch
