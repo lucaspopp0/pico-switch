@@ -2,10 +2,10 @@ from machine import Pin, PWM, Timer
 import time
 import uasyncio
 import errno
-from . import request
-from . import config
+from . import request, config, update_manager
 
 longpress_ms = 1500
+update_longpress_ms = 10000
 
 is_setup = False
 
@@ -75,6 +75,8 @@ class Button:
         self.pressed = False
         self.last_press_time = time.ticks_ms()
         self.longPressTimer = Timer()
+        self.updatePressTimer = Timer()
+        self.key = key
 
         self.action = _buttonAction(key)
         self.long = _buttonAction(str(key) + '-long', long=True)
@@ -99,16 +101,35 @@ class Button:
                     self._long_action()
 
                 self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                
+                # Set up 10-second timer for update check on "on" button
+                if self.key == 'on':
+                    def upc(t):
+                        self._update_action()
+                    
+                    self.updatePressTimer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
+                
                 now = time.ticks_ms()
                 self.last_press_time = now
                 self.action()
             else:
                 self._long_action()
+                # Cancel update timer if button is released
+                if self.key == 'on':
+                    self.updatePressTimer.deinit()
 
 
     def _long_action(self):
         if self.long != None and self.pressed:
             self.long()
+
+    def _update_action(self):
+        if self.pressed and self.key == 'on':
+            print("10-second button hold detected - triggering update check")
+            try:
+                update_manager.try_update()
+            except Exception as e:
+                print("Update failed:", e)
 
 class RgbLed:
 
