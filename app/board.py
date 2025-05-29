@@ -5,8 +5,11 @@ import errno
 
 from . import request, config, update_manager
 
+shared = None
+
 longpress_ms = 1500
 update_longpress_ms = 5000
+ble_longpress_ms = 10000
 
 is_setup = False
 
@@ -20,6 +23,7 @@ switch = None
 
 accepting_inputs = False
 preparing_update = False
+preparing_pairing = False
 
 def _set_wifi_connected(connected):
     pass
@@ -30,28 +34,28 @@ def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
 
 def _buttonAction(key, long=False, flash_progress=True):
-    global accepting_inputs
+    global accepting_inputs, shared
 
     req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(key))
     def on_success(response):
         if flash_progress:
-            led.off()
+            shared.led.off()
     def on_failure(response):
-        uasyncio.run(led.flash(100, 0, 0, times=2))
+        uasyncio.run(shared.led.flash(100, 0, 0, times=2))
     req.on_success = on_success
     req.on_failure = on_failure
     def act():
         global accepting_inputs
 
         if not accepting_inputs:
-            print("Remote off")
+            print("Ignoring press of " + str(key) + ", not accepting inputs right now")
             return
 
         if flash_progress:
             if long:
-                led.do_color(0, 50, 50)
+                shared.led.do_color(0, 50, 50)
             else:
-                led.do_color(0, 0, 50)
+                shared.led.do_color(0, 0, 50)
 
         print('Sending: ' + str(key))
 
@@ -287,13 +291,17 @@ class Board:
     def __init__(self, layout):
         self.layout = layout
         self.buttons = None
+        self.led = None
         self.dial = None
         self.switch = None
 
         self._pressed = {}
         self._update_press_timer = Timer()
+        self._ble_press_timer = Timer()
         
         self._should_update = False
+        self._should_pair = False
+        self.needs_pairing = False
 
         if layout == "v4":
             self.led = RgbLed(16, 17, 18)
@@ -328,7 +336,7 @@ class Board:
                 "12": Button([3], 12, self),
             }
         elif layout == "v5":
-            led = RgbLed(16, 17, 18)
+            self.led = RgbLed(16, 17, 18)
 
             dialScenes = []
 
@@ -337,7 +345,7 @@ class Board:
                     scene = Routine(routine["name"], routine["rgb"], 0)
                     dialScenes.append(scene)
 
-            self.dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+            self.dial = Wheel(self.led, 7, 6, 8, _buttonAction, dialScenes)
             self.buttons = {
                 "on": Button([13, 14], 'on', self),
                 "off": Button([0, 2], 'off', self),
@@ -347,7 +355,7 @@ class Board:
                 "8": Button([1], 8, self),
             }
         elif layout == "v6":
-            led = RgbLed(16, 17, 18)
+            self.led = RgbLed(16, 17, 18)
 
             dialScenes = []
 
@@ -356,7 +364,7 @@ class Board:
                     scene = Routine(routine["name"], routine["rgb"], 0)
                     dialScenes.append(scene)
 
-            self.dial = Wheel(led, 7, 6, 8, _buttonAction, dialScenes)
+            self.dial = Wheel(self.led, 7, 6, 8, _buttonAction, dialScenes)
             self.buttons = {
                 "on": Button([13, 14], 'on', self),
                 "off": Button([0, 2], 'off', self),
@@ -387,7 +395,7 @@ class Board:
             })
         
         elif layout == "v7":
-            led = RgbLed(18, 19, 20)
+            self.led = RgbLed(18, 19, 20)
             
             self.buttons = {
                 "on": Button([10, 9], 'on', self),
@@ -406,7 +414,7 @@ class Board:
             print("Unexpected config layout: " + str(layout))
 
     def _button_press(self, button):
-        global accepting_inputs, preparing_update
+        global accepting_inputs, preparing_update, preparing_pairing
         
         print("Pressed " + str(button.key))
         
@@ -415,30 +423,57 @@ class Board:
         
         self._pressed[str(button.key)] = True
 
+        # Check if this is the ON button and start BLE timer
+        if (str(button.key) == 'on' or str(button.key) == 'off'):
+            def ble_trigger(_):
+                if self._should_pair:
+                    self.needs_pairing = True
+            
+            self._ble_press_timer.deinit()
+            self._ble_press_timer.init(mode=Timer.ONE_SHOT, period=ble_longpress_ms, callback=ble_trigger)
+
         self._update_press_timer.deinit()
 
-        def upc(t):
+        def upc(_):
             self._try_update()
-            print("No updates")
         
         self._update_press_timer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
         
         self._should_update = self._could_update()
         
         if self._should_update:
+            self._should_pair = False
             accepting_inputs = False
             preparing_update = True
-        
+        else:
+            self._should_pair = self._could_pair()
+
+        if self._should_pair:
+            preparing_pairing = True
+            accepting_inputs = False
 
     def _button_unpress(self, button):
-        global accepting_inputs, preparing_update
+        global accepting_inputs, preparing_update, preparing_pairing
         
-        del self._pressed[str(button.key)]
+        # Cancel BLE timer if ON button is released
+        if str(button.key) == 'on' or str(button.key) == 'off':
+            self._ble_press_timer.deinit()
+            
+        if str(button.key) in self._pressed:
+            del self._pressed[str(button.key)]
         
         self._should_update = self._could_update()
         if preparing_update and not self._should_update:
             accepting_inputs = True
-            
+            preparing_update = False
+        
+        self._should_pair = self._could_pair()
+        if preparing_pairing and not self.needs_pairing and not self._should_pair:
+            preparing_pairing = False
+            accepting_inputs = True
+    
+    def _could_pair(self):
+        return self._require_buttons(["on", "off"])
         
     def _could_update(self):
         required_buttons = []
@@ -456,13 +491,14 @@ class Board:
         else:
             print("Unexpected config layout: " + self.layout)
 
-        should_update = True
-        for button in required_buttons:
+        return self._require_buttons(required_buttons)
+    
+    def _require_buttons(self, required):
+        for button in required:
             if not button in self._pressed:
-                should_update = False
-                break
-            
-        return should_update
+                return False
+        
+        return True
 
     def _try_update(self):
         if self._could_update():
@@ -471,13 +507,13 @@ class Board:
                 
 
 def setup():
-    global led, is_setup, dial, switch, accepting_inputs
+    global led, is_setup, dial, switch, accepting_inputs, shared
 
     if is_setup:
         return
     is_setup = True
 
-    board = Board(config.value["layout"])
-    led = board.led
-    dial = board.dial
-    switch = board.switch
+    shared = Board(config.value["layout"])
+    led = shared.led
+    dial = shared.dial
+    switch = shared.switch
