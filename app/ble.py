@@ -122,31 +122,23 @@ async def _ble_server_task():
     
     print("BLE services registered")
     
-    # Main connection loop
-    while True:
-        try:
-            """Start advertising our BLE service."""
-            device_name = "Smart Switch (" + (config.value["name"] or DEVICE_NAME) + ")"
-            print(f"Starting BLE advertising as '{device_name}'")
-            
-            async with await aioble.advertise(
-                interval_us=_ADV_INTERVAL_US,
-                name=device_name,
-                services=[DEVICE_SERVICE_UUID],
-                timeout_ms=0,
-            ) as connection:
-                print("Connection from", connection.device)
-                await connection.disconnected(timeout_ms=None)
-        except Exception as e:
-            print("BLE error:", e)
-            # Brief delay before retrying
-            await asyncio.sleep(1)
-
-async def start_ble_server():
-    """Initialize and start the BLE server in a background task."""
-    asyncio.create_task(_ble_server_task())
-    print("BLE server started in background")
+    try:
+        """Start advertising our BLE service."""
+        device_name = "Smart Switch (" + (config.value["name"] or DEVICE_NAME) + ")"
+        print(f"Starting BLE advertising as '{device_name}'")
+        
+        async with await aioble.advertise(
+            interval_us=_ADV_INTERVAL_US,
+            name=device_name,
+            services=[DEVICE_SERVICE_UUID],
+            timeout_ms=30000,
+        ) as connection:
+            print("Connection from", connection.device)
+            await connection.disconnected(timeout_ms=None)
+            print("Connection terminated")
+    except Exception as e:
+        print("BLE error:", e)
 
 def start_ble_on_demand():
     """Start BLE server on demand (called from button hold)."""
-    asyncio.create_task(_ble_server_task())
+    asyncio.run(_ble_server_task())

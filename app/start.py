@@ -1,3 +1,5 @@
+import time
+
 from . import config
 config.read()
 config.read_version()
@@ -29,10 +31,15 @@ def startApp():
     from . import routes
     from .server import server
     from . import ble
-
-    # Set up BLE callback for 10-second ON button hold
-    if board.shared:
-        board.shared.set_ble_callback(ble.start_ble_on_demand)
+    
+    def ble_pairing():
+        board.shared.led.do_color(50, 0, 50)
+        ble.start_ble_on_demand()
+        board.shared.led.off()
+        time.sleep(0.2)
+        board.shared.led.do_color(50, 0, 50)
+        time.sleep(0.2)
+        board.shared.led.off()
 
     svr = server.Server()
     routes.setup_routes(svr)
@@ -47,5 +54,10 @@ def startApp():
 
         if update_manager.should_check_update():
             update_manager.try_update()
+            
+        if board.shared.needs_pairing:
+            print("Pairing...")
+            board.shared.needs_pairing = False
+            ble_pairing()
 
 startApp()
