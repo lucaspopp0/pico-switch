@@ -48,7 +48,7 @@ def _buttonAction(key, long=False, flash_progress=True):
         global accepting_inputs
 
         if not accepting_inputs:
-            print("Remote off")
+            print("Ignoring press of " + str(key) + ", not accepting inputs right now")
             return
 
         if flash_progress:
@@ -450,15 +450,17 @@ class Board:
 
         if self._should_pair:
             preparing_pairing = True
+            accepting_inputs = False
 
     def _button_unpress(self, button):
         global accepting_inputs, preparing_update, preparing_pairing
         
         # Cancel BLE timer if ON button is released
-        if str(button.key) == 'on':
+        if str(button.key) == 'on' or str(button.key) == 'off':
             self._ble_press_timer.deinit()
-        
-        del self._pressed[str(button.key)]
+            
+        if str(button.key) in self._pressed:
+            del self._pressed[str(button.key)]
         
         self._should_update = self._could_update()
         if preparing_update and not self._should_update:
@@ -466,8 +468,9 @@ class Board:
             preparing_update = False
         
         self._should_pair = self._could_pair()
-        if preparing_pairing and not self._should_pair:
+        if preparing_pairing and not self.needs_pairing and not self._should_pair:
             preparing_pairing = False
+            accepting_inputs = True
     
     def _could_pair(self):
         return self._require_buttons(["on", "off"])

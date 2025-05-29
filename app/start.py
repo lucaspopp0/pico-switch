@@ -33,6 +33,7 @@ def startApp():
     from . import ble
     
     def ble_pairing():
+        board.accepting_inputs = False
         board.shared.led.do_color(50, 0, 50)
         ble.start_ble_on_demand()
         board.shared.led.off()
@@ -40,6 +41,7 @@ def startApp():
         board.shared.led.do_color(50, 0, 50)
         time.sleep(0.2)
         board.shared.led.off()
+        board.accepting_inputs = True
 
     svr = server.Server()
     routes.setup_routes(svr)
@@ -57,7 +59,7 @@ def startApp():
             
         if board.shared.needs_pairing:
             print("Pairing...")
-            board.shared.needs_pairing = False
             ble_pairing()
+            board.shared.needs_pairing = False
 
 startApp()
