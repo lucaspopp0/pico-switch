@@ -26,6 +26,7 @@ DEVICE_NAME = "Pico-Switch"
 _server = None
 _conn_handle = None
 _service = None
+_server_running = False
 
 def _get_type_value():
     return "type: Smart Switch"
@@ -47,8 +48,13 @@ def _get_ha_ip_value():
 
 async def _ble_server_task():
     """Main BLE server task."""
-    global _server, _conn_handle, _service
+    global _server, _conn_handle, _service, _server_running
     
+    if _server_running:
+        print("BLE server already running")
+        return
+        
+    _server_running = True
     print("Starting BLE server")
     
     # Create a service
@@ -138,5 +144,9 @@ async def _ble_server_task():
 
 async def start_ble_server():
     """Initialize and start the BLE server in a background task."""
-    asyncio.run(_ble_server_task())
+    asyncio.create_task(_ble_server_task())
     print("BLE server started in background")
+
+def start_ble_on_demand():
+    """Start BLE server on demand (called from button hold)."""
+    asyncio.create_task(_ble_server_task())

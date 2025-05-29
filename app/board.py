@@ -5,8 +5,11 @@ import errno
 
 from . import request, config, update_manager
 
+shared = None
+
 longpress_ms = 1500
 update_longpress_ms = 5000
+ble_longpress_ms = 10000
 
 is_setup = False
 
@@ -292,8 +295,10 @@ class Board:
 
         self._pressed = {}
         self._update_press_timer = Timer()
+        self._ble_press_timer = Timer()
         
         self._should_update = False
+        self._ble_callback = None
 
         if layout == "v4":
             self.led = RgbLed(16, 17, 18)
@@ -404,6 +409,10 @@ class Board:
 
         else:
             print("Unexpected config layout: " + str(layout))
+            
+    def set_ble_callback(self, callback):
+        """Set callback function to trigger BLE server start on 10-second ON button hold"""
+        self._ble_callback = callback
 
     def _button_press(self, button):
         global accepting_inputs, preparing_update
@@ -415,9 +424,20 @@ class Board:
         
         self._pressed[str(button.key)] = True
 
+        # Check if this is the ON button and start BLE timer
+        if str(button.key) == 'on' and self._ble_callback is not None:
+            self._ble_press_timer.deinit()
+            
+            def ble_trigger(_):
+                if str(button.key) in self._pressed:  # Still pressed after 10 seconds
+                    print("Starting BLE server after 10-second ON button hold")
+                    self._ble_callback()
+            
+            self._ble_press_timer.init(mode=Timer.ONE_SHOT, period=ble_longpress_ms, callback=ble_trigger)
+
         self._update_press_timer.deinit()
 
-        def upc(t):
+        def upc(_):
             self._try_update()
             print("No updates")
         
@@ -432,6 +452,10 @@ class Board:
 
     def _button_unpress(self, button):
         global accepting_inputs, preparing_update
+        
+        # Cancel BLE timer if ON button is released
+        if str(button.key) == 'on':
+            self._ble_press_timer.deinit()
         
         del self._pressed[str(button.key)]
         
@@ -471,13 +495,13 @@ class Board:
                 
 
 def setup():
-    global led, is_setup, dial, switch, accepting_inputs
+    global led, is_setup, dial, switch, accepting_inputs, shared
 
     if is_setup:
         return
     is_setup = True
 
-    board = Board(config.value["layout"])
-    led = board.led
-    dial = board.dial
-    switch = board.switch
+    shared = Board(config.value["layout"])
+    led = shared.led
+    dial = shared.dial
+    switch = shared.switch

@@ -29,14 +29,14 @@ def startApp():
     from . import routes
     from .server import server
     from . import ble
-    import asyncio
+
+    # Set up BLE callback for 10-second ON button hold
+    if board.shared:
+        board.shared.set_ble_callback(ble.start_ble_on_demand)
 
     svr = server.Server()
     routes.setup_routes(svr)
     svr.start()
-    
-    # Start BLE server
-    asyncio.run(ble.start_ble_server())
 
     while True:
         if not wifi.is_connected() and wifi.can_check:
