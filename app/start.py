@@ -20,7 +20,7 @@ def startApp():
     print('Starting app')
 
     wifi.connect()
-    board.led.off()
+    board.shared.led.off()
     
     if not wifi.is_connected():
         raise RuntimeError('wifi connection failed')
@@ -62,4 +62,13 @@ def startApp():
             ble_pairing()
             board.shared.needs_pairing = False
 
-startApp()
+try:
+    startApp()
+except KeyboardInterrupt as interrupt:
+    print("Received interrupt. Shutting down")
+    
+    try:
+        board.shared.led.off()
+    finally:
+        pass
+    
