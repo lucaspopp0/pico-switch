@@ -1,7 +1,7 @@
 # MicroPython aioble module
 # MIT license; Copyright (c) 2021 Jim Mussared
 
-import bluetooth
+import ubluetooth
 
 
 log_level = 1
@@ -74,7 +74,7 @@ def ble_irq(event, data):
 
 
 # TODO: Allow this to be injected.
-ble = bluetooth.BLE()
+ble = ubluetooth.BLE()
 ble.irq(ble_irq)
 
 

@@ -3,7 +3,7 @@
 
 from micropython import const
 
-import asyncio
+import uasyncio
 import binascii
 
 from .core import ble, register_irq_handler, log_error
@@ -49,7 +49,7 @@ class DeviceTimeout:
         # This is the task waiting for the actual operation to complete.
         # Usually this is waiting on an event that will be set() by an IRQ
         # handler.
-        self._task = asyncio.current_task()
+        self._task = uasyncio.current_task()
 
         # Tell the connection that if it disconnects, it should cancel this
         # operation (by cancelling self._task).
@@ -58,8 +58,8 @@ class DeviceTimeout:
 
     async def _timeout_sleep(self):
         try:
-            await asyncio.sleep_ms(self._timeout_ms)
-        except asyncio.CancelledError:
+            await uasyncio.sleep_ms(self._timeout_ms)
+        except uasyncio.CancelledError:
             # The operation completed successfully and this timeout task was
             # cancelled by __exit__.
             return
@@ -73,7 +73,7 @@ class DeviceTimeout:
     def __enter__(self):
         if self._timeout_ms:
             # Schedule the timeout waiter.
-            self._timeout_task = asyncio.create_task(self._timeout_sleep())
+            self._timeout_task = uasyncio.create_task(self._timeout_sleep())
 
     def __exit__(self, exc_type, exc_val, exc_traceback):
         # One of five things happened:
@@ -88,10 +88,10 @@ class DeviceTimeout:
             self._connection._timeouts.remove(self)
 
         try:
-            if exc_type == asyncio.CancelledError:
+            if exc_type == uasyncio.CancelledError:
                 # Case 2, we started a timeout and it's completed.
                 if self._timeout_ms and self._timeout_task is None:
-                    raise asyncio.TimeoutError
+                    raise uasyncio.TimeoutError
 
                 # Case 3, we have a disconnected device.
                 if self._connection and self._connection._conn_handle is None:
@@ -176,7 +176,7 @@ class DeviceConnection:
 
         # This event is fired by the IRQ both for connection and disconnection
         # and controls the device_task.
-        self._event = asyncio.ThreadSafeFlag()
+        self._event = uasyncio.ThreadSafeFlag()
 
         # If we're waiting for a pending MTU exchange.
         self._mtu_event = None
@@ -219,7 +219,7 @@ class DeviceConnection:
             t._task.cancel()
 
     def _run_task(self):
-        self._task = asyncio.create_task(self.device_task())
+        self._task = uasyncio.create_task(self.device_task())
 
     async def disconnect(self, timeout_ms=2000):
         await self.disconnected(timeout_ms, disconnect=True)
@@ -278,7 +278,7 @@ class DeviceConnection:
         if mtu:
             ble.config(mtu=mtu)
 
-        self._mtu_event = self._mtu_event or asyncio.ThreadSafeFlag()
+        self._mtu_event = self._mtu_event or uasyncio.ThreadSafeFlag()
         ble.gattc_exchange_mtu(self._conn_handle)
         with self.timeout(timeout_ms):
             await self._mtu_event.wait()
