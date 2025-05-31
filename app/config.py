@@ -52,3 +52,9 @@ def read_version():
             print(e)
             version = default_version
 
+def use_ha_addon():
+    if "enable_ha_addon" in value:
+        if value["enable_ha_addon"]:
+            return True
+        
+    return False

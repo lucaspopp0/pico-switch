@@ -1,17 +1,27 @@
 import select
 import time
 import socket
+import ujson
 from . import config
 
 request_timeout_s = 5
 socket_connect_s = 2
 
-homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"], 8123)[0][-1]
+def get_addr():
+    port = 8123
+
+    if config.use_ha_addon():
+        port = 8124
+    
+    ip = config.value["home-assistant-ip"]
+    return socket.getaddrinfo(ip, port)[0][-1]
 
 def new_socket():
     s = socket.socket()
     s.settimeout(socket_connect_s)
-    s.connect(homeAddr)
+
+    addr = get_addr()
+    s.connect(addr)
     return s
 
 def urlencode(txt):
@@ -80,12 +90,14 @@ class RequestQueue:
 
 class Request:
 
-    def __init__(self, path):
+    def __init__(self, path="", body=None):
         self.path = path
+        self.body = body
+        self.expiry = None
+
         self.socket = None
         self.response = None
 
-        self.expiry = None
 
         self.on_success = None
         self.on_failure = None
@@ -96,10 +108,28 @@ class Request:
 
         self.socket = new_socket()
         queue.add(self)
-        raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
-        print('Sending: ' + self.path)
+
+        # Build HTTP request body
+        http_lines = []
+
+        if config.use_ha_addon():
+            http_lines = [
+                "PUT /api/press",
+                "Content-Type: application/json"
+                "",
+                ujson.dumps(self.body),
+                
+            ]
+        else:
+            http_lines = [
+                "POST /api/webhook/" + self.path + " HTTP/1.1",
+                "",
+            ]
+
+        raw = "\r\n\r\n".join(http_lines)
+        print('Sending: ' + raw)
         self.expiry = time.time() + request_timeout_s
-        self.socket.send(raw)
+        self.socket.send(raw.encode("utf-8"))
 
     def is_expired(self):
         if self.expiry is not None:

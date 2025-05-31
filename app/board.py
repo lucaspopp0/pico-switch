@@ -36,7 +36,22 @@ def pwmFreq(perc):
 def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs, shared
 
-    req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(key))
+    req = None
+
+    if config.use_ha_addon():
+        body = {
+            "switch": config.value["name"],
+            "layout": config.value["layout"],
+            "key": key,
+        }
+
+        if long:
+            body["long"] = True
+
+        req = request.Request(body=body)
+    else:
+        req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(key))
+
     def on_success(response):
         if flash_progress:
             shared.led.off()
