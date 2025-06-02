@@ -41,7 +41,7 @@ def _buttonAction(key, long=False, flash_progress=True):
         if flash_progress:
             shared.led.off()
     def on_failure(response):
-        uasyncio.run(shared.led.flash(100, 0, 0, times=2))
+        asyncio.run(shared.led.flash(100, 0, 0, times=2))
     req.on_success = on_success
     req.on_failure = on_failure
     def act():

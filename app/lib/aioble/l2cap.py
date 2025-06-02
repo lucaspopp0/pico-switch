@@ -99,7 +99,7 @@ class L2CAPChannel:
         # Has received a _IRQ_L2CAP_RECV since the buffer was last emptied.
         self._data_ready = False
 
-        self._event = uasyncio.ThreadSafeFlag()
+        self._event = asyncio.ThreadSafeFlag()
 
     def _assert_connected(self):
         if self._cid is None:

@@ -141,7 +141,7 @@ async def advertise(
             resp_data = _append(adv_data, resp_data, _ADV_TYPE_NAME, name)
 
         if appearance:
-            # See org.ubluetooth.characteristic.gap.appearance.xml
+            # See org.bluetooth.characteristic.gap.appearance.xml
             resp_data = _append(
                 adv_data, resp_data, _ADV_TYPE_APPEARANCE, struct.pack("<H", appearance)
             )
@@ -154,7 +154,7 @@ async def advertise(
                 struct.pack("<H", manufacturer[0]) + manufacturer[1],
             )
 
-    _connect_event = _connect_event or uasyncio.ThreadSafeFlag()
+    _connect_event = _connect_event or asyncio.ThreadSafeFlag()
     ble.gap_advertise(interval_us, adv_data=adv_data, resp_data=resp_data, connectable=connectable)
 
     try:
@@ -169,10 +169,10 @@ async def advertise(
         # This mirrors what connecting to a central does.
         result._run_task()
         return result
-    except uasyncio.CancelledError:
+    except asyncio.CancelledError:
         # Something else cancelled this task (to manually stop advertising).
         ble.gap_advertise(None)
-    except uasyncio.TimeoutError:
+    except asyncio.TimeoutError:
         # DeviceTimeout waiting for connection.
         ble.gap_advertise(None)
         raise

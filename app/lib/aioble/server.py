@@ -108,9 +108,9 @@ class BaseCharacteristic:
             return
 
         BaseCharacteristic._capture_queue = deque((), _WRITE_CAPTURE_QUEUE_LIMIT)
-        BaseCharacteristic._capture_write_event = uasyncio.ThreadSafeFlag()
-        BaseCharacteristic._capture_consumed_event = uasyncio.ThreadSafeFlag()
-        BaseCharacteristic._capture_task = uasyncio.create_task(
+        BaseCharacteristic._capture_write_event = asyncio.ThreadSafeFlag()
+        BaseCharacteristic._capture_consumed_event = asyncio.ThreadSafeFlag()
+        BaseCharacteristic._capture_task = asyncio.create_task(
             BaseCharacteristic._run_capture_task()
         )
 
@@ -225,7 +225,7 @@ class Characteristic(BaseCharacteristic):
                 BaseCharacteristic._init_capture()
 
             # Set when this characteristic has a value waiting in self._write_data.
-            self._write_event = uasyncio.ThreadSafeFlag()
+            self._write_event = asyncio.ThreadSafeFlag()
             # The connection of the most recent write, or a tuple of
             # (connection, data) if capture is enabled.
             self._write_data = None
@@ -236,7 +236,7 @@ class Characteristic(BaseCharacteristic):
             # TODO: This should probably be a dict of connection to (ev, status).
             # Right now we just support a single indication at a time.
             self._indicate_connection = None
-            self._indicate_event = uasyncio.ThreadSafeFlag()
+            self._indicate_event = asyncio.ThreadSafeFlag()
             self._indicate_status = None
 
         self.uuid = uuid
@@ -309,7 +309,7 @@ class Descriptor(BaseCharacteristic):
             flags |= _FLAG_READ
         if write:
             flags |= _FLAG_WRITE
-            self._write_event = uasyncio.ThreadSafeFlag()
+            self._write_event = asyncio.ThreadSafeFlag()
             self._write_data = None
 
         self.uuid = uuid

@@ -74,7 +74,7 @@ def ble_irq(event, data):
 
 
 # TODO: Allow this to be injected.
-ble = ubluetooth.BLE()
+ble = bluetooth.BLE()
 ble.irq(ble_irq)
 
 
