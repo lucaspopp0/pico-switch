@@ -1,7 +1,7 @@
 import network
 import time
 from . import board
-import uasyncio
+import asyncio
 from . import config
 from machine import Timer
 
@@ -53,7 +53,7 @@ def connect():
     if wlan.status() != 3:
         failed_attempts += 1
         connected = False
-        uasyncio.run(board.led.flash(100, 0, 0, times=5, seconds=0.3))
+        asyncio.run(board.led.flash(100, 0, 0, times=5, seconds=0.3))
         print('wifi connection failed')
     else:
         failed_attempts = 0
@@ -61,8 +61,7 @@ def connect():
         status = wlan.ifconfig()
         current_ip = status[0]
         print('wifi connected! ip = ' + current_ip )
-        uasyncio.run(board.shared.led.flash(0, 0, 50, times=2))
+        asyncio.run(board.shared.led.flash(0, 0, 50, times=2))
         
     can_check = False
     can_check_timer = Timer().init(mode=Timer.ONE_SHOT, period=5000, callback=check)
-

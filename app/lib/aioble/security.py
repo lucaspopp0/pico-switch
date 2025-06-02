@@ -2,7 +2,7 @@
 # MIT license; Copyright (c) 2021 Jim Mussared
 
 from micropython import const, schedule
-import uasyncio
+import asyncio
 import binascii
 import json
 
@@ -171,7 +171,7 @@ async def pair(
     ble.config(bond=bond, le_secure=le_secure, mitm=mitm, io=io)
 
     with connection.timeout(timeout_ms):
-        connection._pair_event = uasyncio.ThreadSafeFlag()
+        connection._pair_event = asyncio.ThreadSafeFlag()
         ble.gap_pair(connection._conn_handle)
         await connection._pair_event.wait()
         # TODO: Allow the passkey action to return to here and

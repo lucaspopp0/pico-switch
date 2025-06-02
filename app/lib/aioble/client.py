@@ -3,10 +3,10 @@
 
 from micropython import const
 from collections import deque
-import uasyncio
+import asyncio
 import struct
 
-import ubluetooth
+import bluetooth
 
 from .core import ble, GattError, register_irq_handler
 from .device import DeviceConnection
@@ -43,7 +43,7 @@ def _client_irq(event, data):
     if event == _IRQ_GATTC_SERVICE_RESULT:
         conn_handle, start_handle, end_handle, uuid = data
         ClientDiscover._discover_result(
-            conn_handle, start_handle, end_handle, ubluetooth.UUID(uuid)
+            conn_handle, start_handle, end_handle, bluetooth.UUID(uuid)
         )
     elif event == _IRQ_GATTC_SERVICE_DONE:
         conn_handle, status = data
@@ -51,14 +51,14 @@ def _client_irq(event, data):
     elif event == _IRQ_GATTC_CHARACTERISTIC_RESULT:
         conn_handle, end_handle, value_handle, properties, uuid = data
         ClientDiscover._discover_result(
-            conn_handle, end_handle, value_handle, properties, ubluetooth.UUID(uuid)
+            conn_handle, end_handle, value_handle, properties, bluetooth.UUID(uuid)
         )
     elif event == _IRQ_GATTC_CHARACTERISTIC_DONE:
         conn_handle, status = data
         ClientDiscover._discover_done(conn_handle, status)
     elif event == _IRQ_GATTC_DESCRIPTOR_RESULT:
         conn_handle, dsc_handle, uuid = data
-        ClientDiscover._discover_result(conn_handle, dsc_handle, ubluetooth.UUID(uuid))
+        ClientDiscover._discover_result(conn_handle, dsc_handle, bluetooth.UUID(uuid))
     elif event == _IRQ_GATTC_DESCRIPTOR_DONE:
         conn_handle, status = data
         ClientDiscover._discover_done(conn_handle, status)
@@ -93,7 +93,7 @@ class ClientDiscover:
         self._status = None
 
         # Tell the generator to process new events.
-        self._event = uasyncio.ThreadSafeFlag()
+        self._event = asyncio.ThreadSafeFlag()
 
         # Must implement the _start_discovery static method. Instances of this
         # type are returned by __anext__.
@@ -116,7 +116,7 @@ class ClientDiscover:
 
         # Tell the connection that we're the active discovery operation (the IRQ only gives us conn_handle).
         self._connection._discover = self
-        # Call the appropriate ubluetooth.BLE method.
+        # Call the appropriate bluetooth.BLE method.
         self._disc_type._start_discovery(self._parent, *self._args)
 
     def __aiter__(self):
@@ -245,7 +245,7 @@ class BaseClientCharacteristic:
         # This will be set by the done IRQ.
         self._read_status = None
         # This will be set by the result and done IRQs. Re-use if possible.
-        self._read_event = self._read_event or uasyncio.ThreadSafeFlag()
+        self._read_event = self._read_event or asyncio.ThreadSafeFlag()
 
         # Issue the read.
         ble.gattc_read(self._connection()._conn_handle, self._value_handle)
@@ -282,7 +282,7 @@ class BaseClientCharacteristic:
             # Same as read.
             self._register_with_connection()
             self._write_status = None
-            self._write_event = self._write_event or uasyncio.ThreadSafeFlag()
+            self._write_event = self._write_event or asyncio.ThreadSafeFlag()
 
         # Issue the write.
         ble.gattc_write(self._connection()._conn_handle, self._value_handle, data, response)
@@ -318,12 +318,12 @@ class ClientCharacteristic(BaseClientCharacteristic):
 
         if properties & _FLAG_NOTIFY:
             # Fired when a notification arrives.
-            self._notify_event = uasyncio.ThreadSafeFlag()
+            self._notify_event = asyncio.ThreadSafeFlag()
             # Data for the most recent notification.
             self._notify_queue = deque((), 1)
         if properties & _FLAG_INDICATE:
             # Same for indications.
-            self._indicate_event = uasyncio.ThreadSafeFlag()
+            self._indicate_event = asyncio.ThreadSafeFlag()
             self._indicate_queue = deque((), 1)
 
     def __str__(self):
@@ -426,7 +426,7 @@ class ClientCharacteristic(BaseClientCharacteristic):
         # Ensure that the generated notifications are dispatched in case the app
         # hasn't awaited on notified/indicated yet.
         self._register_with_connection()
-        if cccd := await self.descriptor(ubluetooth.UUID(_CCCD_UUID)):
+        if cccd := await self.descriptor(bluetooth.UUID(_CCCD_UUID)):
             await cccd.write(struct.pack("<H", _CCCD_NOTIFY * notify + _CCCD_INDICATE * indicate))
         else:
             raise ValueError("CCCD not found")

@@ -1,20 +1,20 @@
-import uasyncio
-import aioble
-import ubluetooth
+import asyncio
+from .lib import aioble
+import bluetooth
 from . import config, wifi
 
 _ADV_INTERVAL_US = 250000
 
 # Service UUID for our device (custom UUID for Pico-Switch)
-DEVICE_SERVICE_UUID = ubluetooth.UUID("19B10000-E8F2-537E-4F6C-D104768A1214")
+DEVICE_SERVICE_UUID = bluetooth.UUID("19B10000-E8F2-537E-4F6C-D104768A1214")
 
 # Characteristic UUIDs for our device
-TYPE_CHAR_UUID = ubluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
-NAME_CHAR_UUID = ubluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
-LAYOUT_CHAR_UUID = ubluetooth.UUID("19B10002-E8F2-537E-4F6C-D104768A1214")
-VERSION_CHAR_UUID = ubluetooth.UUID("19B10003-E8F2-537E-4F6C-D104768A1214")
-IP_CHAR_UUID = ubluetooth.UUID("19B10004-E8F2-537E-4F6C-D104768A1214")
-HA_IP_CHAR_UUID = ubluetooth.UUID("19B10004-E8F2-537E-4F6C-D104768A1214")
+TYPE_CHAR_UUID = bluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
+NAME_CHAR_UUID = bluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
+LAYOUT_CHAR_UUID = bluetooth.UUID("19B10002-E8F2-537E-4F6C-D104768A1214")
+VERSION_CHAR_UUID = bluetooth.UUID("19B10003-E8F2-537E-4F6C-D104768A1214")
+IP_CHAR_UUID = bluetooth.UUID("19B10004-E8F2-537E-4F6C-D104768A1214")
+HA_IP_CHAR_UUID = bluetooth.UUID("19B10004-E8F2-537E-4F6C-D104768A1214")
 
 # BLE advertising name
 DEVICE_NAME = "Pico-Switch"
@@ -138,4 +138,4 @@ async def _ble_server_task():
 
 def start_ble_on_demand():
     """Start BLE server on demand (called from button hold)."""
-    uasyncio.run(_ble_server_task())
+    asyncio.run(_ble_server_task())

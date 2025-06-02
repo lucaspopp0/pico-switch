@@ -1,4 +1,4 @@
-import usocket, os, gc
+import socket, os, gc
 
 class Response:
 
@@ -39,8 +39,8 @@ class Response:
 
     def json(self):
         try:
-            import ujson
-            result = ujson.load(self._socket)
+            import json
+            result = json.load(self._socket)
             return result
         finally:
             self.close()
@@ -68,7 +68,7 @@ class HttpClient:
         if proto == 'http:':
             port = 80
         elif proto == 'https:':
-            import ussl
+            import ssl
             port = 443
         else:
             raise ValueError('Unsupported protocol: ' + proto)
@@ -77,17 +77,17 @@ class HttpClient:
             host, port = host.split(':', 1)
             port = int(port)
 
-        ai = usocket.getaddrinfo(host, port, 0, usocket.SOCK_STREAM)
+        ai = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
         if len(ai) < 1:
             raise ValueError('You are not connected to the internet...')
         ai = ai[0]
 
-        s = usocket.socket(ai[0], ai[1], ai[2])
+        s = socket.socket(ai[0], ai[1], ai[2])
         try:
             s.connect(ai[-1])
             if proto == 'https:':
                 gc.collect()
-                s = ussl.wrap_socket(s, server_hostname=host)
+                s = ssl.wrap_socket(s, server_hostname=host)
             s.write(b'%s /%s HTTP/1.0\r\n' % (method, path))
             if not 'Host' in headers:
                 s.write(b'Host: %s\r\n' % host)
@@ -99,8 +99,8 @@ class HttpClient:
             s.write(b'User-Agent: MicroPython Client\r\n')
             if json is not None:
                 assert data is None
-                import ujson
-                data = ujson.dumps(json)
+                import json
+                data = json.dumps(json)
                 s.write(b'Content-Type: application/json\r\n')
 
             if data:

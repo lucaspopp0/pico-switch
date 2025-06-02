@@ -3,10 +3,10 @@
 
 from micropython import const
 
-import ubluetooth
+import bluetooth
 import struct
 
-import uasyncio
+import asyncio
 
 from .core import (
     ensure_active,
@@ -120,7 +120,7 @@ async def _connect(
 
     # Event will be set in the connected IRQ, and then later
     # re-used to notify disconnection.
-    connection._event = connection._event or uasyncio.ThreadSafeFlag()
+    connection._event = connection._event or asyncio.ThreadSafeFlag()
 
     try:
         with DeviceTimeout(None, timeout_ms):
@@ -210,7 +210,7 @@ class ScanResult:
         ):
             for u in self._decode_field(*codes):
                 for i in range(0, len(u), uuid_len):
-                    yield ubluetooth.UUID(u[i : i + uuid_len])
+                    yield bluetooth.UUID(u[i : i + uuid_len])
 
     # Generator that returns (manufacturer_id, data) tuples.
     def manufacturer(self, filter=None):
@@ -229,7 +229,7 @@ class ScanResult:
 class scan:
     def __init__(self, duration_ms, interval_us=None, window_us=None, active=False):
         self._queue = []
-        self._event = uasyncio.ThreadSafeFlag()
+        self._event = asyncio.ThreadSafeFlag()
         self._done = False
 
         # Keep track of what we've already seen.

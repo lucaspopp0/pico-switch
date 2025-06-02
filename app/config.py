@@ -1,6 +1,6 @@
-import ujson
+import json
 import machine
-import ubinascii
+import binascii
 
 file_name = 'config.json'
 version_file = 'app/.version'
@@ -12,13 +12,13 @@ value = None
 
 version = None
 
-uuid = ubinascii.hexlify(machine.unique_id()).upper()
+uuid = binascii.hexlify(machine.unique_id()).upper()
 
 def info():
     global uuid, version, value
     safe_value = value.copy()
     del safe_value["wifi"]
-    return ujson.dumps({
+    return json.dumps({
         "_uuid": uuid,
         "_version": version,
         "config": safe_value,
@@ -28,7 +28,7 @@ def read():
     global value
     try:
         with open(file_name, 'r') as f:
-            value = ujson.load(f)
+            value = json.load(f)
     except Exception as e:
         if value is not None:
             raise e
@@ -38,7 +38,7 @@ def read():
 
 def write():
     with open(file_name, 'w') as f:
-        ujson.dump(value, f)
+        json.dump(value, f)
 
 def read_version():
     global version
@@ -51,4 +51,3 @@ def read_version():
         else:
             print(e)
             version = default_version
-
