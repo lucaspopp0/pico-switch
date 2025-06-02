@@ -9,7 +9,7 @@ shared = None
 
 longpress_ms = 1500
 update_longpress_ms = 5000
-ble_longpress_ms = 10000
+ble_longpress_ms = 5000
 
 is_setup = False
 
@@ -418,46 +418,40 @@ class Board:
         
         print("Pressed " + str(button.key))
         
-        if not accepting_inputs:
-            return
-        
         self._pressed[str(button.key)] = True
-
-        # Check if this is the ON button and start BLE timer
-        if (str(button.key) == 'on' or str(button.key) == 'off'):
-            def ble_trigger(_):
-                if self._should_pair:
-                    self.needs_pairing = True
-            
-            self._ble_press_timer.deinit()
-            self._ble_press_timer.init(mode=Timer.ONE_SHOT, period=ble_longpress_ms, callback=ble_trigger)
-
-        self._update_press_timer.deinit()
-
-        def upc(_):
-            self._try_update()
-        
-        self._update_press_timer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
         
         self._should_update = self._could_update()
-        
         if self._should_update:
             self._should_pair = False
             accepting_inputs = False
             preparing_update = True
+            
+            print("Update press detected")
+
+            def upc(_):
+                self._try_update()
+            
+            self._update_press_timer.deinit()
+            self._update_press_timer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
+
         else:
             self._should_pair = self._could_pair()
 
-        if self._should_pair:
-            preparing_pairing = True
-            accepting_inputs = False
+            if self._should_pair:
+                print("Pairing press detected")
+
+                preparing_pairing = True
+                accepting_inputs = False
+
+                def ble_trigger(_):
+                    if self._should_pair:
+                        self.needs_pairing = True
+                
+                self._ble_press_timer.deinit()
+                self._ble_press_timer.init(mode=Timer.ONE_SHOT, period=ble_longpress_ms, callback=ble_trigger)
 
     def _button_unpress(self, button):
         global accepting_inputs, preparing_update, preparing_pairing
-        
-        # Cancel BLE timer if ON button is released
-        if str(button.key) == 'on' or str(button.key) == 'off':
-            self._ble_press_timer.deinit()
             
         if str(button.key) in self._pressed:
             del self._pressed[str(button.key)]
@@ -466,39 +460,19 @@ class Board:
         if preparing_update and not self._should_update:
             accepting_inputs = True
             preparing_update = False
+            self._update_press_timer.deinit()
         
         self._should_pair = self._could_pair()
         if preparing_pairing and not self.needs_pairing and not self._should_pair:
             preparing_pairing = False
             accepting_inputs = True
+            self._ble_press_timer.deinit()
     
     def _could_pair(self):
-        return self._require_buttons(["on", "off"])
+        return len(self._pressed) == 2
         
     def _could_update(self):
-        required_buttons = []
-        if self.layout == "v4" or self.layout == "v7":
-            required_buttons = ["1", "on", "7", "off"]
-        elif self.layout == "v3":
-            required_buttons = ["1", "on", "7", "off"]
-        elif self.layout == "v5":
-            required_buttons = ["5", "on", "8", "off"]
-        elif self.layout == "v6":
-            required_buttons = ["5", "on", "8", "off"]
-        elif self.layout == "v7":
-            required_buttons = ["1", "on", "7", "off"]
-
-        else:
-            print("Unexpected config layout: " + self.layout)
-
-        return self._require_buttons(required_buttons)
-    
-    def _require_buttons(self, required):
-        for button in required:
-            if not button in self._pressed:
-                return False
-        
-        return True
+        return len(self._pressed) == 4
 
     def _try_update(self):
         if self._could_update():
