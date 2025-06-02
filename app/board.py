@@ -1,6 +1,6 @@
 from machine import Pin, PWM, Timer
 import time
-import uasyncio
+import asyncio
 import errno
 
 from . import request, config, update_manager

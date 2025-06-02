@@ -1,6 +1,6 @@
-import ujson
+import json
 import machine
-import ubinascii
+import binascii
 
 file_name = 'config.json'
 version_file = 'app/.version'
@@ -51,4 +51,3 @@ def read_version():
         else:
             print(e)
             version = default_version
-

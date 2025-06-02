@@ -1,6 +1,6 @@
-import uasyncio
-import aioble
-import ubluetooth
+import asyncio
+from .lib import aioble
+import bluetooth
 from . import config, wifi
 
 _ADV_INTERVAL_US = 250000

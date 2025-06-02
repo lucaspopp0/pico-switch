@@ -2,7 +2,7 @@
 # MIT license; Copyright (c) 2021 Jim Mussared
 
 from micropython import const, schedule
-import uasyncio
+import asyncio
 import binascii
 import json
 

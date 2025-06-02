@@ -3,8 +3,8 @@
 
 from micropython import const
 from collections import deque
-import ubluetooth
-import uasyncio
+import bluetooth
+import asyncio
 
 from .core import (
     ensure_active,

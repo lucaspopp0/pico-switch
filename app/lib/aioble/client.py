@@ -3,10 +3,10 @@
 
 from micropython import const
 from collections import deque
-import uasyncio
+import asyncio
 import struct
 
-import ubluetooth
+import bluetooth
 
 from .core import ble, GattError, register_irq_handler
 from .device import DeviceConnection

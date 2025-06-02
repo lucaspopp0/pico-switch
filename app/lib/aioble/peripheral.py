@@ -3,10 +3,10 @@
 
 from micropython import const
 
-import ubluetooth
+import bluetooth
 import struct
 
-import uasyncio
+import asyncio
 
 from .core import (
     ensure_active,

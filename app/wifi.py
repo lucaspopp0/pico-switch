@@ -1,7 +1,7 @@
 import network
 import time
 from . import board
-import uasyncio
+import asyncio
 from . import config
 from machine import Timer
 
@@ -65,4 +65,3 @@ def connect():
         
     can_check = False
     can_check_timer = Timer().init(mode=Timer.ONE_SHOT, period=5000, callback=check)
-

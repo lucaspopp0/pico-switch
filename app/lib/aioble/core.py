@@ -1,7 +1,7 @@
 # MicroPython aioble module
 # MIT license; Copyright (c) 2021 Jim Mussared
 
-import ubluetooth
+import bluetooth
 
 
 log_level = 1

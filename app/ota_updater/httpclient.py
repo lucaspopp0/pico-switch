@@ -1,4 +1,4 @@
-import usocket, os, gc
+import socket, os, gc
 
 class Response:
 
@@ -39,7 +39,7 @@ class Response:
 
     def json(self):
         try:
-            import ujson
+            import json
             result = ujson.load(self._socket)
             return result
         finally:
@@ -68,7 +68,7 @@ class HttpClient:
         if proto == 'http:':
             port = 80
         elif proto == 'https:':
-            import ussl
+            import ssl
             port = 443
         else:
             raise ValueError('Unsupported protocol: ' + proto)
@@ -99,7 +99,7 @@ class HttpClient:
             s.write(b'User-Agent: MicroPython Client\r\n')
             if json is not None:
                 assert data is None
-                import ujson
+                import json
                 data = ujson.dumps(json)
                 s.write(b'Content-Type: application/json\r\n')
 
