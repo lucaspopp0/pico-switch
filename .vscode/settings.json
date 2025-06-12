@@ -29,5 +29,6 @@
             "command": "extension.execute",
             "priority": 4
         }
-    ]
+    ],
+    "micropico.syncFolder": "app"
 }
