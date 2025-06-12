@@ -6,7 +6,7 @@ from . import config, wifi
 _ADV_INTERVAL_US = 250000
 
 # Service UUID for our device (custom UUID for Pico-Switch)
-DEVICE_SERVICE_UUID = bluetooth.UUID("19B10000-E8F2-537E-4F6C-D104768A1214")
+DEVICE_SERVICE_UUID = bluetooth.UUID("DF82C9F9-D7B4-47F0-914F-788B3B2AB9A1")
 
 # Characteristic UUIDs for our device
 TYPE_CHAR_UUID = bluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
