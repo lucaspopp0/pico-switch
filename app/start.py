@@ -5,7 +5,7 @@ config.read()
 config.read_version()
 
 from . import board, wifi
-board.setup()
+board.setup(config.value)
     
 def _board_set_wifi_connected(c):
     wifi.connected = c

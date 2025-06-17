@@ -155,7 +155,7 @@ class Routine:
 
 class Wheel:
 
-    def __init__(self, led, clk, dt, sw, handle_press, options):
+    def __init__(self, led, clk, dt, sw, options):
         self.led = led
         self.handle_press = handle_press
         self.clk = Pin(clk, Pin.IN)
@@ -168,6 +168,8 @@ class Wheel:
         self.lastA = 0
         self.size = len(options)
         self.value = 0
+
+        self.on_press = lambda routine : None
 
         self.last_pressed = False
         self.pressed = False
