@@ -23,6 +23,12 @@ class PushButton:
 
         self.long_press_timer = Timer()
 
+        def irq_handler(_):
+            self._on_interrupt()
+
+        for gpio in self.gpios:
+            gpio.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=irq_handler)
+
     def _on_interrupt(self):
         self.last_pressed = self.pressed
 
@@ -34,6 +40,8 @@ class PushButton:
 
     def _on_change(self):
         if self.pressed:
+            print(self.key + " pressed")
+
             self.on_press()
 
             def longpress_callback(t):
