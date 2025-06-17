@@ -17,9 +17,9 @@ class PushButton:
         self.last_pressed = False
         self.pressed = False
 
-        self.on_press = lambda : None
-        self.on_long_press = lambda : None
-        self.on_release = lambda : None
+        self.on_press = lambda key : None
+        self.on_long_press = lambda key : None
+        self.on_release = lambda key : None
 
         self.long_press_timer = Timer()
 
@@ -42,10 +42,10 @@ class PushButton:
         if self.pressed:
             print(str(self.key) + " pressed")
 
-            self.on_press()
+            self.on_press(str(self.key))
 
             def longpress_callback(t):
-                self.on_long_press()
+                self.on_long_press(str(self.key))
 
             # Start a timer for a long press
             self.long_press_timer.init(
@@ -54,7 +54,7 @@ class PushButton:
                 callback=longpress_callback,
             )
         else:
-            self.on_release()
+            self.on_release(str(self.key))
             self.long_press_timer.deinit()
 
 class RgbLED:

@@ -140,17 +140,17 @@ class Board:
             raise Exception("Unexpected config layout: " + str(self.layout))
 
         # Setup event handlers for buttons
-        for key, button in self.buttons.items():
-            def on_press():
-                self._button_press(button)
+        for button in self.buttons.values():
+            def on_press(key: str):
+                self._button_press(key)
                 self.on_press(key)
 
             button.on_press = on_press
 
-            button.on_long_press = lambda : self.on_long_press(key)
+            button.on_long_press = lambda key : self.on_long_press(key)
 
-            def on_release():
-                self._button_unpress(button)
+            def on_release(key: str):
+                self._button_unpress(key)
                 self.on_release()
 
             button.on_release = on_release
@@ -161,10 +161,10 @@ class Board:
 
     # A basic hook on button presses, to check if the user
     # is trying to trigger an update or not
-    def _button_press(self, button):
-        print("Pressed " + str(button.key))
+    def _button_press(self, key):
+        print("Pressed " + str(key))
         
-        self._pressed[str(button.key)] = True
+        self._pressed[str(key)] = True
         
         self._should_update = self._could_update()
         if self._should_update:
@@ -207,9 +207,9 @@ class Board:
                 )
 
     # Update state variables when buttons are released
-    def _button_unpress(self, button):
-        if str(button.key) in self._pressed:
-            del self._pressed[str(button.key)]
+    def _button_unpress(self, key):
+        if str(key) in self._pressed:
+            del self._pressed[str(key)]
         
         # If no longer preparing for an update, cancel the
         # timer and allow inputs again

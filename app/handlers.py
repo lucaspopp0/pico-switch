@@ -1,7 +1,7 @@
 import asyncio
 import errno
 
-from .board import board
+from .board import board, deprecated
 from . import config
 from . import request
 from . import wifi
@@ -16,6 +16,9 @@ def setup_handlers(shared_board: board.Board):
         shared_board.on_press = on_press_rgbled
         shared_board.on_long_press = on_longpress_rgbled
         shared_board.on_update = on_update
+
+    if shared_board.dial is not None:
+        shared_board.on_dial_press = on_dial_rgbled
 
 def _new_request(
     key: str,
@@ -50,6 +53,17 @@ def _send_request(req: request.Request):
                 wifi.failed_attempts = 0
                 wifi.can_check = True
 
+def on_dial_rgbled(routine: deprecated.Routine):
+    if board.shared is None or board.shared.led is None:
+        return
+    
+    if not board.shared.accepting_inputs:
+        print("Ignoring press, not accepting inputs right now")
+        return
+    
+    req = _new_request(routine.name, on_success_rgbled, on_failure_rgbled)
+    _send_request(req)
+
 def on_press_rgbled(key: str):
     if board.shared is None or board.shared.led is None:
         return
@@ -65,6 +79,9 @@ def on_press_rgbled(key: str):
 
 def on_release_rgbled():
     if board.shared is None or board.shared.led is None:
+        return
+    
+    if not board.shared.accepting_inputs:
         return
     
     board.shared.led.off()
