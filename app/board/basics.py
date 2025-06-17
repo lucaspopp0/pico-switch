@@ -55,6 +55,7 @@ class PushButton:
             )
         else:
             self.on_release()
+            self.long_press_timer.deinit()
 
 class RgbLED:
 

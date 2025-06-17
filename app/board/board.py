@@ -25,6 +25,7 @@ class Board:
         self._should_pair = False
         self.needs_pairing = False
 
+        self.on_release = lambda : None
         self.on_update = lambda : None
         self.on_press = lambda key : None
         self.on_long_press = lambda key : None
@@ -150,6 +151,7 @@ class Board:
 
             def on_release():
                 self._button_unpress(button)
+                self.on_release()
 
             button.on_release = on_release
 
