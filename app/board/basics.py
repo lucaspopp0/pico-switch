@@ -40,7 +40,7 @@ class PushButton:
 
     def _on_change(self):
         if self.pressed:
-            print(self.key + " pressed")
+            print(str(self.key) + " pressed")
 
             self.on_press()
 
