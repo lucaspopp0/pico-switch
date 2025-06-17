@@ -1,6 +1,6 @@
 import network
 import time
-from . import board
+from .board import board
 import asyncio
 from . import config
 from machine import Timer
