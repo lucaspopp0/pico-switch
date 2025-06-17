@@ -29,7 +29,9 @@ class Board:
         self.on_update = lambda : None
         self.on_press = lambda key : None
         self.on_long_press = lambda key : None
+
         self.on_dial_press = lambda routine : None
+        self.on_dial_long_press = lambda routine : None
 
         if self.layout == "v4":
             self.led = RgbLED(16, 17, 18)
@@ -157,7 +159,15 @@ class Board:
 
         # Setup event handlers for the dial, if it exists
         if self.dial is not None:
-            self.dial.on_press = self.on_dial_press
+            def on_dial_press(routine):
+                self.on_dial_press(routine)
+
+            self.dial.on_press = on_dial_press
+
+            def on_dial_long_press(routine):
+                self.on_dial_long_press(routine)
+
+            self.dial.on_long_press = on_dial_long_press
 
     # A basic hook on button presses, to check if the user
     # is trying to trigger an update or not

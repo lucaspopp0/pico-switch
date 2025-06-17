@@ -19,6 +19,7 @@ def setup_handlers(shared_board: board.Board):
 
     if shared_board.dial is not None:
         shared_board.on_dial_press = on_dial_rgbled
+        shared_board.on_dial_long_press = on_dial_long_rgbled
 
 def _new_request(
     key: str,
@@ -52,6 +53,18 @@ def _send_request(req: request.Request):
             if wifi.failed_attempts == wifi.max_attempts:
                 wifi.failed_attempts = 0
                 wifi.can_check = True
+
+def on_dial_long_rgbled(routine: deprecated.Routine):
+    if board.shared is None or board.shared.led is None:
+        return
+    
+    if not board.shared.accepting_inputs:
+        print("Ignoring press, not accepting inputs right now")
+        return
+    
+    req = _new_request(routine.name + "-long", on_success_rgbled, on_failure_rgbled)
+    board.shared.led.do_color(0, 50, 50)
+    _send_request(req)
 
 def on_dial_rgbled(routine: deprecated.Routine):
     if board.shared is None or board.shared.led is None:
@@ -97,6 +110,8 @@ def on_longpress_rgbled(key: str):
     longKey = key + "-long"
     req = _new_request(longKey, on_success_rgbled, on_failure_rgbled)
     board.shared.led.do_color(0, 50, 50)
+
+    print("Sending " + req.path)
 
     _send_request(req)
 

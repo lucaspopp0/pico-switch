@@ -1,4 +1,5 @@
 from machine import Pin, Timer
+from .basics import PushButton
 
 class Routine:
 
@@ -11,7 +12,6 @@ class Wheel:
 
     def __init__(self, led, clk, dt, sw, options):
         self.led = led
-        self.handle_press = handle_press
         self.clk = Pin(clk, Pin.IN)
         self.dt = Pin(dt, Pin.IN)
         self.sw = Pin(sw, Pin.IN, Pin.PULL_UP)
@@ -24,6 +24,7 @@ class Wheel:
         self.value = 0
 
         self.on_press = lambda routine : None
+        self.on_long_press = lambda routine : None
 
         self.last_pressed = False
         self.pressed = False
@@ -90,7 +91,7 @@ class Wheel:
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=PushButton.longpress_ms, callback=lpc)
                 self._send_hook()
 
     def _long_action(self):
@@ -101,11 +102,11 @@ class Wheel:
         self.timer.deinit()
         self._flash_color()
 
-        name = self.current_option().name
         if long:
-            name = name + '-long'
+            self.on_long_press(self.current_option())
+        else:
+            self.on_press(self.current_option())
 
-        self.handle_press(name, long, flash_progress=False)()
         self._reset_timer()
 
     def _flash_color(self):
