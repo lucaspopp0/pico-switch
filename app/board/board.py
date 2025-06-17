@@ -4,6 +4,9 @@ from .deprecated import Routine, Wheel, Switch
 
 class Board:
 
+    update_longpress_ms = 5000
+    ble_longpress_ms = 5000
+
     def __init__(self, config):
         self.layout = config["layout"]
         self.buttons = None
@@ -154,6 +157,8 @@ class Board:
         if self.dial is not None:
             self.dial.on_press = self.on_dial_press
 
+    # A basic hook on button presses, to check if the user
+    # is trying to trigger an update or not
     def _button_press(self, button):
         print("Pressed " + str(button.key))
         
@@ -168,10 +173,16 @@ class Board:
             print("Update press detected")
 
             def upc(_):
-                self._try_update()
+                if self._could_update():
+                    print("Checking for updates...")
+                    self.on_update()
             
             self._update_press_timer.deinit()
-            self._update_press_timer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
+            self._update_press_timer.init(
+                mode=Timer.ONE_SHOT,
+                period=Board.update_longpress_ms,
+                callback=upc,
+            )
 
         else:
             self._should_pair = self._could_pair()
@@ -187,34 +198,40 @@ class Board:
                         self.needs_pairing = True
                 
                 self._ble_press_timer.deinit()
-                self._ble_press_timer.init(mode=Timer.ONE_SHOT, period=ble_longpress_ms, callback=ble_trigger)
+                self._ble_press_timer.init(
+                    mode=Timer.ONE_SHOT,
+                    period=Board.ble_longpress_ms,
+                    callback=ble_trigger,
+                )
 
+    # Update state variables when buttons are released
     def _button_unpress(self, button):
         if str(button.key) in self._pressed:
             del self._pressed[str(button.key)]
         
+        # If no longer preparing for an update, cancel the
+        # timer and allow inputs again
         self._should_update = self._could_update()
         if self.preparing_update and not self._should_update:
             self.accepting_inputs = True
             self.preparing_update = False
             self._update_press_timer.deinit()
         
+        # If no longer preparing for BLE pairing, cancel the
+        # timer and allow inputs again
         self._should_pair = self._could_pair()
         if self.preparing_pairing and not self.needs_pairing and not self._should_pair:
             self.preparing_pairing = False
             self.accepting_inputs = True
             self._ble_press_timer.deinit()
     
+    # Holding two buttons indicates bluetooth pairing mode
     def _could_pair(self):
         return len(self._pressed) == 2
         
+    # Holding four buttons checks for software updates
     def _could_update(self):
         return len(self._pressed) == 4
-
-    def _try_update(self):
-        if self._could_update():
-            print("Checking for updates...")
-            self.on_update()
                 
 def setup(config):
     global shared
