@@ -3,6 +3,13 @@ import time
 import socket
 from . import config
 
+shared_queue = None
+
+def setup_shared_queue():
+    global shared_queue
+    if shared_queue is None:
+        shared_queue = RequestQueue()
+
 request_timeout_s = 5
 socket_connect_s = 2
 
@@ -87,8 +94,8 @@ class Request:
 
         self.expiry = None
 
-        self.on_success = None
-        self.on_failure = None
+        self.on_success = lambda : None
+        self.on_failure = lambda : None
 
     def send(self, queue):
         if self.socket is not None:
@@ -119,15 +126,13 @@ class Request:
     def succeeded(self):
         resp = parse_response(str(self.response))
         print('Request succeeded: ' + resp)
-        if self.on_success is not None:
-            self.on_success(resp)
+        self.on_success()
         self.close()
 
     def failed(self):
         err = parse_response(str(self.response))
         print('Request failed: ' + err)
-        if self.on_failure is not None:
-            self.on_failure(err)
+        self.on_failure()
         self.close()
 
     def close(self):

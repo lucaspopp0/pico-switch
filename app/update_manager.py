@@ -43,19 +43,20 @@ def try_update():
 
     try:
         from .ota_updater.ota_updater import OTAUpdater
-        from . import board, config
+        from . import config
+        from .board import board
 
         headers = {}
         if "github-token" in config.value:
             headers["Authorization"] = "Bearer " + str(config.value["github-token"])
             headers["X-GitHub-Api-Version"] = "2022-11-28"
 
-        otaUpdater = OTAUpdater(board.led, 'https://github.com/lucaspopp0/pico-switch', main_dir='app')
+        otaUpdater = OTAUpdater(board.shared.led, 'https://github.com/lucaspopp0/pico-switch', main_dir='app')
 
         if otaUpdater.install_update_if_available():
             machine.reset()
         else:   
-            board.led.off()
+            board.shared.led.off()
 
         del(otaUpdater)
         gc.collect()

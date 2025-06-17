@@ -1,6 +1,6 @@
 import network
 import time
-from . import board
+from .board import board
 import asyncio
 from . import config
 from machine import Timer
@@ -39,9 +39,9 @@ def connect():
             break
         max_wait -= 1
         print('waiting for wifi...')
-        board.led.do_color(50, 50, 0)
+        board.shared.led.do_color(50, 50, 0)
         time.sleep(0.3)
-        board.led.off()
+        board.shared.led.off()
         time.sleep(0.7)
         
     def check(tmr):
@@ -53,7 +53,7 @@ def connect():
     if wlan.status() != 3:
         failed_attempts += 1
         connected = False
-        asyncio.run(board.led.flash(100, 0, 0, times=5, seconds=0.3))
+        asyncio.run(board.shared.led.flash(100, 0, 0, times=5, seconds=0.3))
         print('wifi connection failed')
     else:
         failed_attempts = 0
