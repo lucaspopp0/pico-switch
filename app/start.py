@@ -27,12 +27,15 @@ def startApp():
     # Enable the board
     board.shared.accepting_inputs = True
 
+    # Setup the request queue
+    from . import request
+    request.setup_shared_queue()
+
     # Setup the BLE pairing callback
     from . import update_manager
     from . import routes
     from .server import server
     from . import ble
-    from . import request
     
     def ble_pairing():
         board.accepting_inputs = False
