@@ -50,12 +50,12 @@ def try_update():
             headers["Authorization"] = "Bearer " + str(config.value["github-token"])
             headers["X-GitHub-Api-Version"] = "2022-11-28"
 
-        otaUpdater = OTAUpdater(board.led, 'https://github.com/lucaspopp0/pico-switch', main_dir='app')
+        otaUpdater = OTAUpdater(board.shared.led, 'https://github.com/lucaspopp0/pico-switch', main_dir='app')
 
         if otaUpdater.install_update_if_available():
             machine.reset()
         else:   
-            board.led.off()
+            board.shared.led.off()
 
         del(otaUpdater)
         gc.collect()

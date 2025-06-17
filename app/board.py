@@ -13,14 +13,6 @@ ble_longpress_ms = 5000
 
 is_setup = False
 
-request_queue = request.RequestQueue()
-
-led = None
-
-dial = None
-
-switch = None
-
 accepting_inputs = False
 preparing_update = False
 preparing_pairing = False
@@ -60,7 +52,7 @@ def _buttonAction(key, long=False, flash_progress=True):
         print('Sending: ' + str(key))
 
         try:
-            req.send(request_queue)
+            req.send(request.shared_queue)
         except OSError as oserr:
             print("Failed to send: " + str(oserr))
             
@@ -487,7 +479,5 @@ def setup():
         return
     is_setup = True
 
+    request.setup_shared_queue()
     shared = Board(config.value["layout"])
-    led = shared.led
-    dial = shared.dial
-    switch = shared.switch

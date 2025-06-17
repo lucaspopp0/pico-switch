@@ -3,6 +3,13 @@ import time
 import socket
 from . import config
 
+shared_queue = None
+
+def setup_shared_queue():
+    global shared_queue
+    if shared_queue is None:
+        shared_queue = RequestQueue()
+
 request_timeout_s = 5
 socket_connect_s = 2
 

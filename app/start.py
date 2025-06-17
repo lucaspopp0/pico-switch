@@ -19,18 +19,23 @@ board.set_wifi_connected = _board_set_wifi_connected
 def startApp():
     print('Starting app')
 
+    # Connect to wifi
     wifi.connect()
     board.shared.led.off()
     
+    # If connection fails, bail out
     if not wifi.is_connected():
         raise RuntimeError('wifi connection failed')
     
+    # Enable the board
     board.accepting_inputs = True
 
+    # Setup the BLE pairing callback
     from . import update_manager
     from . import routes
     from .server import server
     from . import ble
+    from . import request
     
     def ble_pairing():
         board.accepting_inputs = False
@@ -43,20 +48,28 @@ def startApp():
         board.shared.led.off()
         board.accepting_inputs = True
 
+    # Setup the HTTP server
     svr = server.Server()
     routes.setup_routes(svr)
     svr.start()
 
+    # Start an infinite loop
     while True:
+        # Should check for wifi, check for wifi
         if not wifi.is_connected() and wifi.can_check:
             wifi.connect()
 
-        board.request_queue.poll()
+        # Check for request data
+        request.shared_queue.poll()
+
+        # Poll for server requests
         svr.poll()
 
+        # Check for updates on an interval
         if update_manager.should_check_update():
             update_manager.try_update()
             
+        # Handle pairing requests
         if board.shared.needs_pairing:
             print("Pairing...")
             ble_pairing()
