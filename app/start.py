@@ -4,22 +4,19 @@ from . import config
 config.read()
 config.read_version()
 
-from . import board, wifi
+from .board import board
 board.setup(config.value)
-    
-def _board_set_wifi_connected(c):
-    wifi.connected = c
-    
-    if wifi.failed_attempts == wifi.max_attempts:
-        wifi.failed_attempts = 0
-        wifi.can_check = True
-    
-board.set_wifi_connected = _board_set_wifi_connected
 
 def startApp():
+    if board.shared is None:
+        return
+    
     print('Starting app')
+    from . import handlers
+    handlers.setup_handlers(board.shared)
 
     # Connect to wifi
+    from . import wifi
     wifi.connect()
     board.shared.led.off()
     
@@ -28,7 +25,7 @@ def startApp():
         raise RuntimeError('wifi connection failed')
     
     # Enable the board
-    board.accepting_inputs = True
+    board.shared.accepting_inputs = True
 
     # Setup the BLE pairing callback
     from . import update_manager

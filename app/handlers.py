@@ -5,9 +5,16 @@ from .board import board
 from . import config
 from . import request
 from . import wifi
+from . import update_manager
 
 PROGRESS_COLOR = (0, 0, 50)
 LONG_COLOR = (0, 50, 50)
+
+def setup_handlers(shared_board: board.Board):
+    if shared_board.led is not None:
+        shared_board.on_press = on_press_rgbled
+        shared_board.on_long_press = on_longpress_rgbled
+        shared_board.on_update = on_update
 
 def _new_request(
     key: str,
@@ -37,6 +44,10 @@ def _send_request(req: request.Request):
         # to wifi
         if oserr.args[0] == errno.EHOSTUNREACH:
             wifi.connected = False
+            
+            if wifi.failed_attempts == wifi.max_attempts:
+                wifi.failed_attempts = 0
+                wifi.can_check = True
 
 def on_press_rgbled(key: str):
     if board.shared is None or board.shared.led is None:
@@ -76,3 +87,6 @@ def on_failure_rgbled():
         return
     
     asyncio.run(board.shared.led.flash(100, 0, 0, times=2))
+
+def on_update():
+    update_manager.try_update()

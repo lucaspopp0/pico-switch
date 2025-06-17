@@ -43,7 +43,8 @@ def try_update():
 
     try:
         from .ota_updater.ota_updater import OTAUpdater
-        from . import board, config
+        from . import config
+        from .board import board
 
         headers = {}
         if "github-token" in config.value:
