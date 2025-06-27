@@ -1,6 +1,7 @@
 import select
 import time
 import socket
+from collections.abc import Callable
 from . import config
 
 request_timeout_s = 5
@@ -91,8 +92,8 @@ class Request:
 
         self.expiry = None
 
-        self.on_success = None
-        self.on_failure = None
+        self.on_success: Callable | None = None
+        self.on_failure: Callable | None = None
 
     def send(self, queue):
         if self.socket is not None:
@@ -112,10 +113,14 @@ class Request:
         return False
 
     def recv(self):
-        self.response = self.socket.recv(1000)
+        if self.socket is not None:
+            self.response = self.socket.recv(1000)
 
     def handle_response(self):
-        if self.response.startswith(b'HTTP/1.1 200'):
+        if (
+            self.response is not None
+            and self.response.startswith(b'HTTP/1.1 200')
+        ):
             self.succeeded()
         else:
             self.failed()

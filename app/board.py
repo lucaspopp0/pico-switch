@@ -6,8 +6,6 @@ import errno
 from . import request, config, update_manager
 from .neopixels import NeoPixels
 
-shared = None
-
 longpress_ms = 1500
 update_longpress_ms = 5000
 ble_longpress_ms = 5000
@@ -15,12 +13,6 @@ ble_longpress_ms = 5000
 is_setup = False
 
 request_queue = request.RequestQueue()
-
-led = None
-
-dial = None
-
-switch = None
 
 accepting_inputs = False
 preparing_update = False
@@ -37,22 +29,32 @@ def pwmFreq(perc):
 def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs, shared
 
-    req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(key))
-    def on_success(response):
-        if flash_progress:
-            shared.do_color(0, 0, 0)
-    def on_failure(response):
-        asyncio.run(shared.flash(100, 0, 0, times=2))
-    req.on_success = on_success
-    req.on_failure = on_failure
     def act():
-        global accepting_inputs
-
         if not accepting_inputs:
             print("Ignoring press of " + str(key) + ", not accepting inputs right now")
             return
+        
+        # Set up a new request
+        encoded_name = request.urlencode(config.value["name"])
+        request_path='remote-press?remote=' + encoded_name + '&button=' + str(key)
+        req = request.Request(request_path)
 
-        if flash_progress:
+        # Setup the success callback
+        def on_success(_):
+            if flash_progress and shared is not None:
+                shared.do_color(0, 0, 0)
+
+        req.on_success = on_success
+
+        # Setup the failure callback
+        def on_failure(_):
+            if shared is not None:
+                asyncio.run(shared.flash(100, 0, 0, times=2))
+
+        req.on_failure = on_failure
+        
+        # Flash LED on send
+        if flash_progress and shared is not None:
             if long:
                 shared.do_color(0, 50, 50)
             else:
@@ -61,10 +63,12 @@ def _buttonAction(key, long=False, flash_progress=True):
         print('Sending: ' + str(key))
 
         try:
+            # Send the request
             req.send(request_queue)
         except OSError as oserr:
             print("Failed to send: " + str(oserr))
             
+            # Run the failure callback if sending failed
             req.failed()
             
             if oserr.args[0] == errno.EHOSTUNREACH:
@@ -255,7 +259,9 @@ class Wheel:
             self._send_hook(True)
 
     def _send_hook(self, long=False):
-        self.timer.deinit()
+        if self.timer is not None:
+            self.timer.deinit()
+
         self._flash_color()
 
         name = self.current_option().name
@@ -463,15 +469,15 @@ class Board:
                 global accepting_inputs, dial
                 print("Accepting inputs")
                 accepting_inputs = True
-                if dial is not None:
-                    dial.enabled = True
+                if self.dial is not None:
+                    self.dial.enabled = True
 
             def _off():
                 global accepting_inputs, dial
                 print("Not accepting inputs")
                 accepting_inputs = False
-                if dial is not None:
-                    dial.enabled = False
+                if self.dial is not None:
+                    self.dial.enabled = False
 
 
             self.switch = Switch(27, 28, {
@@ -582,7 +588,9 @@ class Board:
             return self.neopixels.flash((r, g, b), seconds=seconds, times=times)
         elif self.led is not None:
             return self.led.flash(r, g, b, seconds=seconds, times=times)
-                
+              
+
+shared: Board | None = None  
 
 def setup():
     global led, is_setup, dial, switch, accepting_inputs, shared
@@ -592,6 +600,3 @@ def setup():
     is_setup = True
 
     shared = Board(config.value["layout"])
-    led = shared.led
-    dial = shared.dial
-    switch = shared.switch
