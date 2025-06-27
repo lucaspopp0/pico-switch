@@ -6,9 +6,13 @@ from . import config
 request_timeout_s = 5
 socket_connect_s = 2
 
-homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"], 8123)[0][-1]
+homeAddr = None
 
 def new_socket():
+    global homeAddr
+    if homeAddr is None:
+        homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"], 8123)[0][-1]
+
     s = socket.socket()
     s.settimeout(socket_connect_s)
     s.connect(homeAddr)
