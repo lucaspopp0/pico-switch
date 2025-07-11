@@ -30,6 +30,17 @@ def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs, shared
 
     def act():
+        deadline_passed = False
+        request_complete = False
+        
+        def pass_deadline(_):
+            deadline_passed = True
+            
+            if request_complete and flash_progress and shared is not None:
+                shared.do_color(0, 0, 0)
+        
+        deadline_timer = Timer().init(mode=Timer.ONE_SHOT, period=1000, callback=pass_deadline)
+        
         if not accepting_inputs:
             print("Ignoring press of " + str(key) + ", not accepting inputs right now")
             return
@@ -41,24 +52,26 @@ def _buttonAction(key, long=False, flash_progress=True):
 
         # Setup the success callback
         def on_success(_):
-            if flash_progress and shared is not None:
+            request_complete = True
+            if deadline_passed and flash_progress and shared is not None:
                 shared.do_color(0, 0, 0)
 
         req.on_success = on_success
 
         # Setup the failure callback
         def on_failure(_):
+            request_complete = True
             if shared is not None:
-                asyncio.run(shared.flash(100, 0, 0, times=2))
+                asyncio.run(shared.flash(50, 0, 0, times=2))
 
         req.on_failure = on_failure
         
         # Flash LED on send
         if flash_progress and shared is not None:
             if long:
-                shared.do_color(0, 50, 50)
+                shared.do_color(0, 15, 15)
             else:
-                shared.do_color(0, 0, 50)
+                shared.do_color(15, 15, 15)
 
         print('Sending: ' + str(key))
 
@@ -311,7 +324,6 @@ class V2Button:
         self.board = board
 
         self.color = (255, 0, 0)
-        self.offRequirements = (True, True)
         self.pressTimer = Timer()
 
         # Set up the button and neopixels
@@ -319,34 +331,44 @@ class V2Button:
             return self.on_press(long)
         
         self.button = Button([self.buttonPin], self.key, self.board, press_callback)
+        
+        self.request_done = False
+        self.timeout_done = False
     
-    def try_off(self):
-        if self.offRequirements[0] and self.offRequirements[1]:
-            self.neopixels.set_button(self.key, (0, 0, 0))
-
-    def press_timeout(self, _):
-        self.offRequirements = [self.offRequirements[0], True]
-        self.pressTimer.deinit()
-        self.try_off()
-
     def on_press(self, long=False):
         global accepting_inputs, shared
         accepting_inputs = False
-
-        self.pressTimer.deinit()
-
-        self.pressTimer.init(mode=Timer.ONE_SHOT, period=500, callback=self.press_timeout)
+        
+        self.request_done = False
+        self.timeout_done = False
+        
+        key = str(self.key)
+        if long:
+            key += '-long'
+            
+        def off():
+            if self.key == 'off':
+                self.neopixels.set_button(self.key, (3, 1, 0))
+            else:
+                self.neopixels.set_button(self.key, (0, 0, 0))
 
         def on_success(response):
-            self.offRequirements = [True, self.offRequirements[1]]
-            self.try_off()
+            self.request_done = True
+            if self.timeout_done:
+                off()
 
         def on_failure(response):
-            self.neopixels.set_button(self.key, (100, 0, 0))
+            self.request_done = True
+            self.neopixels.set_button(self.key, (30, 0, 0))
             time.sleep(2)
-            self.neopixels.set_button(self.key, (0, 0, 0))
+            off()
         
-        req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(self.key))
+        def press_timeout(t):
+            self.timeout_done = True
+            if self.request_done:
+                off()
+        
+        req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + key)
         req.on_success = on_success
         req.on_failure = on_failure
 
@@ -355,12 +377,17 @@ class V2Button:
 
             if not accepting_inputs:
                 print("Ignoring press of " + str(self.key) + ", not accepting inputs right now")
-                return
+
+            self.pressTimer.deinit()
+            
+            self.neopixels.set_button('off', (3, 1, 0))
 
             if long:
-                self.neopixels.set_button(self.key, (0, 50, 50))
+                self.neopixels.set_button(self.key, (0, 15, 15))
             else:
-                self.neopixels.set_button(self.key, (0, 0, 50))
+                self.neopixels.set_button(self.key, (10, 10, 10))
+        
+            self.pressTimer.init(mode=Timer.ONE_SHOT, period=1000, callback=press_timeout)
 
             print('Sending: ' + str(self.key))
 
@@ -505,8 +532,15 @@ class Board:
             self.neopixels = NeoPixels()
             self.buttons = {
                 "on": V2Button(3, self.neopixels, "on", self),
-                "1": V2Button(1, self.neopixels, "1", self),
+                "off": V2Button(19, self.neopixels, "off", self),
+                #"1": V2Button(1, self.neopixels, "1", self),
                 "2": V2Button(2, self.neopixels, "2", self),
+                "3": V2Button(5, self.neopixels, "3", self),
+                "4": V2Button(6, self.neopixels, "4", self),
+                #"5": V2Button(17, self.neopixels, "5", self),
+                "6": V2Button(18, self.neopixels, "6", self),
+                "7": V2Button(21, self.neopixels, "7", self),
+                "8": V2Button(22, self.neopixels, "8", self),
             }
         else:
             print("Unexpected config layout: " + str(layout))

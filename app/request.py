@@ -1,10 +1,10 @@
 import select
 import time
 import socket
-from collections.abc import Callable
 from . import config
 
-request_timeout_s = 5
+request_timeout_s = 2
+retries = 3
 socket_connect_s = 2
 
 homeAddr = None
@@ -26,7 +26,7 @@ class RequestQueue:
 
     def __init__(self):
         self.poller = select.poll()
-        self.requestsByPath = {}
+        self.requestsByPath: dict[string, Request] = {}
 
     def requestBySocket(self, sock):
         for path in self.requestsByPath:
@@ -74,6 +74,15 @@ class RequestQueue:
             print("socket in queue has data, but could not tie it to a request")
             out[0][0].close()
             return
+        
+        def on_failure():
+            global retries
+            if req.retry < retries:
+                print("Retrying...")
+                req.retry += 1
+                req.send(self)
+            else:
+                req.on_failure()
 
         req.recv()
 
@@ -89,22 +98,33 @@ class Request:
         self.path = path
         self.socket = None
         self.response = None
+        self.retry = 0
 
         self.expiry = None
 
-        self.on_success: Callable | None = None
-        self.on_failure: Callable | None = None
+        self.on_success = lambda response : None
+        self.on_failure = lambda response : None
 
     def send(self, queue):
+        global retries
+        
         if self.socket is not None:
             return
-
-        self.socket = new_socket()
-        queue.add(self)
-        raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
-        print('Sending: ' + self.path)
-        self.expiry = time.time() + request_timeout_s
-        self.socket.send(raw)
+            
+        for self.retry in range(retries):
+            try:
+                self.socket = new_socket()
+                queue.add(self)
+                raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
+                print('Sending: ' + self.path)
+                self.expiry = time.time() + request_timeout_s
+                self.socket.send(raw)
+                return
+            except OSError as err:
+                if self.retry + 1 < retries:
+                    print(err)
+                else:
+                    raise err
 
     def is_expired(self):
         if self.expiry is not None:

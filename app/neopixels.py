@@ -8,8 +8,8 @@ class NeoPixels:
         self.rows = [
             NeoPixel(Pin(0), 6),
             NeoPixel(Pin(4), 4),
-            NeoPixel(Pin(22), 6),
-            NeoPixel(Pin(18), 4),
+            NeoPixel(Pin(16), 6),
+            NeoPixel(Pin(20), 4),
         ]
 
     # Update the color of all pixels at once
