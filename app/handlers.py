@@ -2,13 +2,16 @@ import asyncio
 import errno
 
 from .board import board, deprecated
-from . import config
-from . import request
-from . import wifi
-from . import update_manager
+from .config import config
+from .requestqueue import request
+from .wifi import wifi
+from .otaupdate import update_manager
 
 PROGRESS_COLOR = (0, 0, 50)
 LONG_COLOR = (0, 50, 50)
+
+def urlencode(txt):
+    return txt.replace(' ', '%20')
 
 def setup_handlers(shared_board: board.Board):
     if shared_board.led is not None:
@@ -26,7 +29,7 @@ def _new_request(
     on_success=lambda : None,
     on_failure=lambda : None
 ):
-    path = 'remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + str(key)
+    path = 'remote-press?remote=' + urlencode(config.value["name"]) + '&button=' + str(key)
     req = request.Request(path)
 
     req.on_success = on_success

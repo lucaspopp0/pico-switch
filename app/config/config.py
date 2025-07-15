@@ -2,50 +2,64 @@ import json
 import machine
 import binascii
 
-class Config:
+class ConfigValue(dict):
 
-    filename = 'config.json'
-    versionfile = 'app/.version'
+    # Return the wifi configuration, if it exists
+    def get_wifi(self) -> tuple[str, str, bool]:
+        if 'wifi' in self:
+            if 'ssid' in self['wifi'] and 'pass' in self['wifi']:
+                return (
+                    self['wifi']['ssid'],
+                    self['wifi']['pass'],
+                    True,
+                )
+
+        return ("", "", False)
+
+class Config:
 
     @staticmethod
     def device_uuid():
         return binascii.hexlify(machine.unique_id()).upper()
+
+    filename = 'config.json'
+    versionfile = 'app/.version'
     
     def __init__(self):
-        self._raw = {}
-        self._version = 'v0.0.0'
+        self.value = ConfigValue({})
+        self.version = 'v0.0.0'
 
     def load(self):
         # Load the config file
         try:
             with open(Config.filename, 'r') as file:
-                self.raw = json.load(file)
+                self.raw = ConfigValue(json.load(file))
         except Exception as e:
             if self.raw is not None:
                 raise e
             else:
-                self.raw = {}
+                self.raw = ConfigValue({})
 
         # Load the version file
         try:
             with open(Config.versionfile, 'r') as f:
-                self._version = f.read().replace('[\n\r\t ]', '')
+                self.version = f.read().replace('[\n\r\t ]', '')
         except Exception as e:
-            if self._version is not None:
+            if self.version is not None:
                 raise e
             else:
-                self._version = 'v0.0.0'
+                self.version = 'v0.0.0'
 
     def dump(self):
         with open(Config.filename, 'w') as f:
-            json.dump(self._raw, f)
+            json.dump(self.raw, f)
 
     def publicinfo(self) -> str:
-        safe_value = self._raw.copy()
+        safe_value = self.raw.copy()
         del safe_value["wifi"]
 
         return json.dumps({
             "_uuid": Config.device_uuid(),
-            "_version": self._version,
+            "_version": self.version,
             "config": safe_value,
         })
