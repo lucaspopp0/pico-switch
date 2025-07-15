@@ -9,46 +9,51 @@ class RequestQueue:
 
     socket_connect_s = 2
 
-    def __init__(self, host: str):
-        # A poller, which can be used to poll multiple sockets in parallel
-        self.poller = select.poll()
-        self.requestsByPath: dict[str, Request] = {}
-        self.host = host
-
-    def new_socket(self) -> socket.Socket:
+    @staticmethod
+    def new_socket(host: str) -> socket.Socket:
         sock = socket.socket()
         sock.settimeout(RequestQueue.socket_connect_s)
-        sock.connect(self.host)
+        sock.connect(host)
         return sock
 
+    def __init__(self, capacity: int, host: str):
+        # A poller, which can be used to poll multiple sockets in parallel
+        self.poller = select.poll()
+        
+        self._requests: list[Request] = []
+        self.capacity = capacity
+
+        self.host = host
+
     def requestBySocket(self, sock: socket.Socket):
-        for path in self.requestsByPath:
-            req = self.requestsByPath[path]
-            if self.requestsByPath[path].socket == sock:
+        for req in self._requests:
+            if req.socket == sock:
                 return req
 
         return None
 
-    # Adds a request to the queue
+    # Adds a request to the queue, and send it
     # req - a Request
     def add(self, req):
-        if req.path in self.requestsByPath:
-            self.poller.unregister(self.requestsByPath[req.path].socket)
+        if len(self._requests) >= self.capacity:
+            print("Request queue at capacity")
+            return
 
-        self.requestsByPath[req.path] = req
+        self._requests.append(req)
+        req.socket = RequestQueue.new_socket(self.host)
 
         self.poller.register(req.socket, select.POLLIN)
+        req.send(req.socket)
 
     def prune_queue(self):
         to_prune = []
 
-        for path in self.requestsByPath:
-            req = self.requestsByPath[path]
+        for req in self._requests:
             if req.is_expired():
                 to_prune.append(req)
 
         for req in to_prune:
-            del self.requestsByPath[req.path]
+            self._requests.remove(req)
             req.failed()
 
     def poll(self):
@@ -72,7 +77,7 @@ class RequestQueue:
 
         req.handle_response()
 
-        del self.requestsByPath[req.path]
+        self._requests.remove(req)
 
 
 # Handlers for a single HTTP request
@@ -97,9 +102,9 @@ class Request:
         self.on_success = lambda : None
         self.on_failure = lambda : None
 
-    def send(self, sock: socket.Socket):
-        self.socket = sock
-        self.expiry = time.time() + Request.request_timeout_s
+    def send(self, socket: socket.Socket):
+        self.socket = socket
+        self.expiry = time.time() + Request.request_timeout_s   
         self.bytes_received = bytes([])
 
         print('Sending: ' + self.path)
