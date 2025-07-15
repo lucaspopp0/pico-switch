@@ -2,6 +2,12 @@ from machine import Pin
 from neopixel import NeoPixel
 from time import sleep
 
+class PixelCoords:
+
+    def __init__(self, chain: int, offset: int):
+        self.chain = chain
+        self.offset = offset
+
 class NeoPixels:
     
     def __init__(self):
@@ -21,29 +27,29 @@ class NeoPixels:
     def pixel_coords(
         self,
         key: str,
-    ) -> tuple[int, int]:
+    ) -> PixelCoords:
         key = str(key)
 
         if key == "1":
-            return (0, 0)
+            return PixelCoords(0, 0)
         elif key == "2":
-            return (0, 2)
+            return PixelCoords(0, 2)
         elif key == "on":
-            return (0, 4)
+            return PixelCoords(0, 4)
         elif key == "3":
-            return (1, 0)
+            return PixelCoords(1, 0)
         elif key == "4":
-            return (1, 2)
+            return PixelCoords(1, 2)
         elif key == "5":
-            return (2, 0)
+            return PixelCoords(2, 0)
         elif key == "6":
-            return (2, 2)
+            return PixelCoords(2, 2)
         elif key == "off":
-            return (2, 4)
+            return PixelCoords(2, 4)
         elif key == "7":
-            return (3, 0)
+            return PixelCoords(3, 0)
         elif key == "8":
-            return (3, 2)
+            return PixelCoords(3, 2)
         else:
             raise Exception("unknown key: ", key)
         
@@ -54,9 +60,9 @@ class NeoPixels:
         rgb: tuple[int, int, int],
     ) -> None:
         coords = self.pixel_coords(key)
-        self.rows[coords[0]][coords[1]] = rgb
-        self.rows[coords[0]][coords[1]+1] = rgb
-        self.rows[coords[0]].write()
+        self.rows[coords.chain][coords.offset] = rgb
+        self.rows[coords.chain][coords.offset+1] = rgb
+        self.rows[coords.chain].write()
 
     def set_all(
         self,

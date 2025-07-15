@@ -12,7 +12,7 @@ class RequestQueue:
     def __init__(self, host: str):
         # A poller, which can be used to poll multiple sockets in parallel
         self.poller = select.poll()
-        self.requestsByPath: dict[str, list[Request]] = {}
+        self.requestsByPath: dict[str, Request] = {}
         self.host = host
 
     def new_socket(self) -> socket.Socket:
@@ -23,19 +23,19 @@ class RequestQueue:
 
     def requestBySocket(self, sock: socket.Socket):
         for path in self.requestsByPath:
-            for req in self.requestsByPath[path]:
-                if req.socket == sock:
-                    return req
+            req = self.requestsByPath[path]
+            if self.requestsByPath[path].socket == sock:
+                return req
 
         return None
 
     # Adds a request to the queue
     # req - a Request
     def add(self, req):
-        if not req.path in self.requestsByPath:
-            self.requestsByPath[req.path] = []
+        if req.path in self.requestsByPath:
+            self.poller.unregister(self.requestsByPath[req.path].socket)
 
-        self.requestsByPath[req.path].append(req)
+        self.requestsByPath[req.path] = req
 
         self.poller.register(req.socket, select.POLLIN)
 
@@ -43,15 +43,13 @@ class RequestQueue:
         to_prune = []
 
         for path in self.requestsByPath:
-            for req in self.requestsByPath[path]:
-                if req.is_expired():
-                    to_prune.append(req)
-
-                    if len(self.requestsByPath[path]) == 1:
-                        req.failed()
+            req = self.requestsByPath[path]
+            if req.is_expired():
+                to_prune.append(req)
 
         for req in to_prune:
-            self.requestsByPath[req.path].remove(req)
+            del self.requestsByPath[req.path]
+            req.failed()
 
     def poll(self):
         out = self.poller.poll(500)
@@ -74,7 +72,7 @@ class RequestQueue:
 
         req.handle_response()
 
-        self.requestsByPath[req.path].remove(req)
+        del self.requestsByPath[req.path]
 
 
 # Handlers for a single HTTP request
