@@ -17,13 +17,16 @@ class RequestQueue:
         return sock
 
     def __init__(self, capacity: int, host: str):
-        # A poller, which can be used to poll multiple sockets in parallel
+        self.host = host
+
+        # Create a new poller, which can be used to poll
+        # multiple sockets in parallel
         self.poller = select.poll()
         
+        # Set up a list of requests for the queue
         self._requests: list[Request] = []
         self.capacity = capacity
 
-        self.host = host
 
     def request_by_socket(self, sock: socket.Socket):
         for req in self._requests:
@@ -33,7 +36,6 @@ class RequestQueue:
         return None
 
     # Adds a request to the queue, and send it
-    # req - a Request
     def add(self, req):
         if len(self._requests) >= self.capacity:
             print("Request queue at capacity")
@@ -45,6 +47,7 @@ class RequestQueue:
         self.poller.register(req.socket, select.POLLIN)
         req.send(req.socket)
 
+    # Trigger timeouts
     def prune_queue(self):
         to_prune = []
 
@@ -56,6 +59,7 @@ class RequestQueue:
             self._requests.remove(req)
             req.failed()
 
+    # Poll any active sockets for data
     def poll(self):
         events = self.poller.poll(500)
 
@@ -69,6 +73,7 @@ class RequestQueue:
             if event & select.POLLIN:
                 self.on_sock_data(sock)
 
+    # Handle data from polling
     def on_sock_data(self, sock: socket.Socket):
         self.poller.unregister(sock)
 
