@@ -21,7 +21,7 @@ class PushButton:
         self.on_long_press = lambda key : None
         self.on_release = lambda key : None
 
-        self.long_press_timer = Timer()
+        self.long_press_timer: Timer | None = None
 
         def irq_handler(_):
             self._on_interrupt()
@@ -48,14 +48,17 @@ class PushButton:
                 self.on_long_press(str(self.key))
 
             # Start a timer for a long press
-            self.long_press_timer.init(
+            self.long_press_timer = Timer(
+                -1,
                 mode=Timer.ONE_SHOT,
                 period=PushButton.longpress_ms,
                 callback=longpress_callback,
             )
         else:
             self.on_release(str(self.key))
-            self.long_press_timer.deinit()
+            
+            if self.long_press_timer is not None:
+                self.long_press_timer.deinit()
 
 class RgbLED:
 

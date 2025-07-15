@@ -18,8 +18,8 @@ class Board:
         self.preparing_pairing = False
 
         self._pressed = {}
-        self._update_press_timer = Timer()
-        self._ble_press_timer = Timer()
+        self._update_press_timer: Timer | None = None
+        self._ble_press_timer: Timer | None = None
         
         self._should_update = False
         self._should_pair = False
@@ -189,8 +189,11 @@ class Board:
                     print("Checking for updates...")
                     self.on_update()
             
-            self._update_press_timer.deinit()
-            self._update_press_timer.init(
+            if self._update_press_timer is not None:
+                self._update_press_timer.deinit()
+
+            self._update_press_timer = Timer(
+                -1,
                 mode=Timer.ONE_SHOT,
                 period=Board.update_longpress_ms,
                 callback=upc,
@@ -208,9 +211,12 @@ class Board:
                 def ble_trigger(_):
                     if self._should_pair:
                         self.needs_pairing = True
+            
+                if self._ble_press_timer is not None:
+                    self._ble_press_timer.deinit()
                 
-                self._ble_press_timer.deinit()
-                self._ble_press_timer.init(
+                self._ble_press_timer = Timer(
+                    -1,
                     mode=Timer.ONE_SHOT,
                     period=Board.ble_longpress_ms,
                     callback=ble_trigger,
@@ -227,7 +233,8 @@ class Board:
         if self.preparing_update and not self._should_update:
             self.accepting_inputs = True
             self.preparing_update = False
-            self._update_press_timer.deinit()
+            if self._update_press_timer is not None:
+                self._update_press_timer.deinit()
         
         # If no longer preparing for BLE pairing, cancel the
         # timer and allow inputs again
@@ -235,7 +242,8 @@ class Board:
         if self.preparing_pairing and not self.needs_pairing and not self._should_pair:
             self.preparing_pairing = False
             self.accepting_inputs = True
-            self._ble_press_timer.deinit()
+            if self._ble_press_timer is not None:
+                self._ble_press_timer.deinit()
     
     # Holding two buttons indicates bluetooth pairing mode
     def _could_pair(self):
