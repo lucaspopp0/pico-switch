@@ -6,16 +6,16 @@ def start():
     shared.config = Config()
     shared.config.load()
 
-    # Configure the board
-    from .board import board
-    shared.board = board.Board(shared.config)
-
     # Configure the request queue
     from .requestqueue.queue import RequestQueue
     shared.requestqueue = RequestQueue(
         5,
         shared.config.value['homeassistant-ip'],
     )
+
+    # Configure the board
+    from .board import board
+    shared.board = board.Board(shared.config)
 
     # Configure the WiFi connection
     ssid, psk, ok = shared.config.value.get_wifi()
