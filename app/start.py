@@ -1,16 +1,41 @@
 def start():
+    from . import shared
+
     # Load the config
     from .config.config import Config
-    config = Config()
-    config.load()
+    shared.config = Config()
+    shared.config.load()
 
     # Configure the board
     from .board import board
-    board.setup(config)
+    shared.board = board.Board(shared.config)
+
+    # Configure the request queue
+    from .requestqueue.queue import RequestQueue
+    shared.requestqueue = RequestQueue(
+        5,
+        shared.config.value['homeassistant-ip'],
+    )
 
     # Configure the WiFi connection
+    ssid, psk, ok = shared.config.value.get_wifi()
+    if not ok:
+        return
+    
+    from .wifi.wifi import WiFiController
+    shared.wifi = WiFiController(ssid, psk)
 
-    # Start the event loop
+    # TODO: Setup handlers
+
+    shared.wifi.connect()
+
+    if not shared.wifi._connected:
+        return
+
+    # Event loop
+    while True:
+        # Check the request queue for responses
+        shared.requestqueue.poll()
 
 try:
     start()

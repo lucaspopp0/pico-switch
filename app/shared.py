@@ -1,9 +1,9 @@
-from .requestqueue import queue
-from .board import board
-from .config import config
-from .wifi import wifi
+from .requestqueue.queue import RequestQueue
+from .board.board import Board
+from .config.config import Config
+from .wifi.wifi import WiFiController
 
-shared_rq: queue.RequestQueue
-shared_board: board.Board
-shared_cfg: config.Config
-shared_wifi: wifi.WiFiController
+requestqueue: RequestQueue
+board: Board
+config: Config
+wifi: WiFiController
