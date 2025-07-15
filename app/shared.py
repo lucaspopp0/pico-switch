@@ -1,4 +1,4 @@
-from .requestqueue import request, queue
+from .requestqueue import queue
 from .board import board
 from .config import config
 from .wifi import wifi
