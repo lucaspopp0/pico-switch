@@ -25,7 +25,7 @@ class RequestQueue:
 
         self.host = host
 
-    def requestBySocket(self, sock: socket.Socket):
+    def request_by_socket(self, sock: socket.Socket):
         for req in self._requests:
             if req.socket == sock:
                 return req
@@ -57,28 +57,31 @@ class RequestQueue:
             req.failed()
 
     def poll(self):
-        out = self.poller.poll(500)
+        events = self.poller.poll(500)
 
-        if len(out) == 0:
+        if len(events) == 0:
+            # Nothing to process, use this time to clean up!
             self.prune_queue()
             return
+        
+        # Handle results from polling
+        for sock, event in events:
+            if event & select.POLLIN:
+                self.on_sock_data(sock)
 
-        self.poller.unregister(out[0][0])
-        req = self.requestBySocket(out[0][0])
+    def on_sock_data(self, sock: socket.Socket):
+        self.poller.unregister(sock)
 
+        req = self.request_by_socket(sock)
         if req is None:
             print("socket in queue has data, but could not tie it to a request")
-            out[0][0].close()
+            sock.close()
             return
 
         req.recv()
-
         req.close()
-
         req.handle_response()
-
         self._requests.remove(req)
-
 
 # Handlers for a single HTTP request
 class Request:
