@@ -1,12 +1,47 @@
+import math
 from machine import Pin
 from neopixel import NeoPixel
 from time import sleep
 
+def OFF(_: int):
+    def func(_: int):
+        return (0, 0, 0)
+    
+    return func
+
+def WHITE(brightness: float):
+    val = int(255.0 * brightness)
+    def func(_: int):
+        return (val, val, val)
+    
+    return func
+
+def PULSE(rgb: tuple[int, int, int], pps: int):
+    # sin(((pi * ticks) - (0.5 * pi) + 1) / 2)
+    # may need to alternate between HSL and RGB for this
+
+    def func(ticks: int):
+        return rgb
+    
+    return func
+
 class PixelCoords:
+
+    @staticmethod
+    def from_string(coords: str):
+        xy = coords.split(',')
+
+        return PixelCoords(
+            int(xy[0]),
+            int(xy[1]),
+        )
 
     def __init__(self, chain: int, offset: int):
         self.chain = chain
         self.offset = offset
+
+    def to_string(self) -> str:
+        return str(self.chain) + "," + str(self.offset)
 
 class NeoPixels:
     
@@ -17,6 +52,19 @@ class NeoPixels:
             NeoPixel(Pin(22), 6),
             NeoPixel(Pin(18), 4),
         ]
+
+        self.valuefuncs = []
+        for row in range(len(self.rows)):
+            self.valuefuncs[row] = []
+            for offset in range(len(self.rows[row])):
+                self.valuefuncs[row][offset] = OFF
+
+    def set_valuefunc(
+        self,
+        coords: PixelCoords,
+        func,
+    ):
+        pass
 
     # Update the color of all pixels at once
     def write(self) -> None:
