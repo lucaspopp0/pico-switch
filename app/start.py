@@ -30,6 +30,9 @@ def start():
         # Check for request data
         shared.requestqueue.poll()
 
+         # Poll for api requests
+        shared.api.poll()
+
         # Check for updates on an interval
         if update_manager.should_check_update():
             update_manager.try_update()
