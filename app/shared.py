@@ -20,6 +20,7 @@ def setup_board():
     layout = str(config.value['layout'])
 
     match layout:
+        
         case layouts.V3:
             board = BasicButtonBoard(
                 led=basics.RgbLED(18, 17, 16),
