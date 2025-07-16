@@ -14,7 +14,7 @@ def start():
     )
 
     # Configure the board
-    shared.board = shared.setup_board()
+    shared.setup_board()
 
     # Configure the WiFi connection
     ssid, psk, ok = shared.config.value.get_wifi()
@@ -23,8 +23,11 @@ def start():
     
     from .wifi.wifi import WiFiController
     shared.wifi = WiFiController(ssid, psk)
+    shared.wifi.on_connecting = shared.board.on_wifi_connecting
+    shared.wifi.on_connected = shared.board.on_wifi_connected
+    shared.wifi.on_failed = shared.board.on_wifi_failed
 
-    # TODO: Setup handlers
+    # TODO: Setup WiFi connection handlers
 
     shared.wifi.connect()
 

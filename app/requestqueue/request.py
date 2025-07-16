@@ -13,8 +13,13 @@ class Request:
             return response
         return response[0:ind]
 
-    def __init__(self, path):
+    def __init__(
+        self,
+        path: str,
+        body: str = '',
+    ):
         self.path = path
+        self.body = body
         self.socket: socket.Socket | None = None
         self.bytes_received: bytes = bytes([])
 
@@ -30,7 +35,9 @@ class Request:
         self.bytes_received = bytes([])
 
         print('Sending: ' + self.path)
-        raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
+        raw = b'POST /api/webhook/' + self.path.encode('utf-8')
+        raw += b' HTTP/1.1\r\n\r\n'
+        raw += self.body.encode('utf-8')
         self.socket.send(raw)
 
     # Check for timeout

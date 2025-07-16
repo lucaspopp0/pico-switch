@@ -1,22 +1,27 @@
+import asyncio
+import json
+
 from .requestqueue.queue import RequestQueue
+from .requestqueue.request import Request
 from .board.board import Board, BasicButtonBoard, DialBoard
 from .board import layouts, basics, deprecated
 from .config.config import Config
 from .wifi.wifi import WiFiController
+from .otaupdate import update_manager
 
 requestqueue: RequestQueue
 board: Board
 config: Config
 wifi: WiFiController
 
-def setup_board() -> Board:
-    global config
+def setup_board():
+    global board, config
 
     layout = str(config.value['layout'])
 
     match layout:
         case layouts.V3:
-            return BasicButtonBoard(
+            board = BasicButtonBoard(
                 led=basics.RgbLED(18, 17, 16),
                 buttons={
                     "on": basics.PushButton([0, 5], 'on'),
@@ -37,7 +42,7 @@ def setup_board() -> Board:
             )
         
         case layouts.V4:
-            return BasicButtonBoard(
+            board = BasicButtonBoard(
                 led=basics.RgbLED(16, 17, 18),
                 buttons={
                     "on": basics.PushButton([9, 6], 'on'),
@@ -81,11 +86,9 @@ def setup_board() -> Board:
                     "on": _on,
                     "off": _off
                 })
-
-            return board
         
         case layouts.V7:
-            return BasicButtonBoard(
+            board = BasicButtonBoard(
                 led=basics.RgbLED(18, 19, 20),
                 buttons={
                     "on": basics.PushButton([10, 9], 'on'),
@@ -103,4 +106,47 @@ def setup_board() -> Board:
         
         case _:
             raise Exception("Unknown layout: " + str(layout))
+        
+    def new_request(key: str) -> Request:
+        return Request(
+            'press',
+            json.dumps({
+                "switch": config.value["name"],
+                "layout": layout,
+                "key": key,
+            }),
+        )
+    
+    board.on_update = update_manager.try_update
             
+    # Setup basic button handlers
+    if isinstance(board, BasicButtonBoard):
+        b = board
+
+        def on_success():
+            b.led.off()
+
+        def on_failure():
+            asyncio.run(b.led.flash(100, 0, 0, times=2))
+
+        def on_press(key: str):
+            req = new_request(key)
+            req.on_success = on_success
+            req.on_failure = on_failure
+            requestqueue.add(req)
+
+        b.on_press = on_press
+        
+    # Setup dial handlers
+    if isinstance(board, DialBoard):
+        b = board
+
+        def on_dial_press(routine: deprecated.Routine):
+            b.on_press(routine.name)
+
+        def on_dial_long_press(routine: deprecated.Routine):
+            b.on_press(routine.name + '-long')
+
+        b.on_dial_press = on_dial_press
+        b.on_dial_longpress = on_dial_long_press
+        

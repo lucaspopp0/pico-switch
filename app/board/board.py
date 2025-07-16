@@ -141,6 +141,15 @@ class Board:
             if self._pair_press_timer is not None:
                 self._pair_press_timer.deinit()
 
+    def on_wifi_connecting(self):
+        pass
+
+    def on_wifi_connected(self):
+        pass
+
+    def on_wifi_failed(self, failure: str):
+        pass
+
 class BasicButtonBoard(Board):
 
     def __init__(
@@ -156,21 +165,41 @@ class BasicButtonBoard(Board):
 
         # Setup event handlers for buttons
         for button in self.buttons.values():
-            def on_press(key: str):
-                self._button_press(key)
-                self.on_press(key)
+            button.on_press = lambda key : self._on_button_press(key)
+            button.on_long_press = lambda key : self._on_button_long_press(key)
+            button.on_release = lambda key : self._on_button_release(key)
 
-            def on_long_press(key: str):
-                self.on_press(key + '-long')
+    def _on_button_press(self, key: str):
+        self._button_press(key)
 
-            button.on_press = on_press
-            button.on_long_press = on_long_press
+        if not self.accepting_inputs:
+            return
+        
+        self.led.do_color(0, 0, 50)
+        self.on_press(key)
 
-            def on_release(key: str):
-                self._button_unpress(key)
-                self.on_release(key)
+    def _on_button_long_press(self, key: str):
+        if not self.accepting_inputs:
+            return
+        
+        self.led.do_color(0, 50, 50)
+        self.on_press(key + '-long')
 
-            button.on_release = on_release
+    def _on_button_release(self, key: str):
+        self._button_unpress(key)
+        self.on_release(key)
+
+    def on_wifi_connecting(self):
+        # Flash the LED
+        pass
+
+    def on_wifi_connected(self):
+        # Flash the LED
+        pass
+
+    def on_wifi_failed(self, failure: str):
+        # Flash the LED
+        print(failure)
 
 class DialBoard(BasicButtonBoard):
 
