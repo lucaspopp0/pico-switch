@@ -14,8 +14,7 @@ def start():
     )
 
     # Configure the board
-    from .board import board
-    shared.board = board.Board(shared.config)
+    shared.board = shared.setup_board()
 
     # Configure the WiFi connection
     ssid, psk, ok = shared.config.value.get_wifi()
