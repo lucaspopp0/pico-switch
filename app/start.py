@@ -23,14 +23,13 @@ def start():
     
     from .wifi.wifi import WiFiController
     shared.wifi = WiFiController(ssid, psk)
+
+    # Setup WiFi connection handlers
     shared.wifi.on_connecting = shared.board.on_wifi_connecting
     shared.wifi.on_connected = shared.board.on_wifi_connected
     shared.wifi.on_failed = shared.board.on_wifi_failed
 
-    # TODO: Setup WiFi connection handlers
-
     shared.wifi.connect()
-
     if not shared.wifi._connected:
         return
 
