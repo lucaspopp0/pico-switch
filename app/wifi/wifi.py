@@ -60,24 +60,32 @@ class WiFiController:
             wait -= 1
 
             match self.wlan.status():
+
                 case network.STAT_GOT_IP:
                     self._connected = True
                     self.ip = self.wlan.ifconfig()[0]
                     print('WiFi connected! (' + self.ip + ')')
                     self.on_connected()
                     return
+                
                 case network.STAT_NO_AP_FOUND:
                     self.on_failed(
                         'WiFi connection failed: Network "' + self._ssid + '" not',
                     )
+                    return
+                
                 case network.STAT_WRONG_PASSWORD:
                     self.on_failed(
                         'WiFi connection failed: Wrong password',
                     )
+                    return
+                
                 case network.STAT_CONNECT_FAIL:
                     self.on_failed(
                         'WiFi connection failed',
                     )
+                    return
+                
                 case _:
                     print('Trying to connect to "' + self._ssid + '"...')
                     time.sleep(1)
