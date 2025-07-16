@@ -33,9 +33,9 @@ def start():
     if not shared.wifi._connected:
         return
 
-    # Event loop
+    # Start an infinite loop
     while True:
-        # Check the request queue for responses
+        # Check for request data
         shared.requestqueue.poll()
 
 try:
