@@ -13,13 +13,13 @@ def start():
     shared.setup_automatic_updates()
     shared.setup_api()
 
-    # Setup the local HTTP server
-    shared.api.start()
-
     # Try connecting to WiFi
     shared.wifi.connect()
     if not shared.wifi._connected:
         return
+
+    # Setup the HTTP server
+    shared.api.start()
 
     # Start an infinite loop
     while True:
