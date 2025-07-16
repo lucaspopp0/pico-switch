@@ -1,42 +1,38 @@
+import asyncio
+
 def start():
     from . import shared
+    from .otaupdate import update_manager
 
-    # Load the config
-    from .config.config import Config
-    shared.config = Config()
-    shared.config.load()
-
-    # Configure the request queue
-    from .requestqueue.queue import RequestQueue
-    shared.requestqueue = RequestQueue(
-        5,
-        shared.config.value['homeassistant-ip'],
-    )
-
-    # Configure the board
+    # Set everything up
+    shared.setup_config()
+    shared.setup_request_queue()
     shared.setup_board()
+    shared.setup_wifi()
+    shared.setup_bluetooth()
+    shared.setup_automatic_updates()
+    shared.setup_api()
 
-    # Configure the WiFi connection
-    ssid, psk, ok = shared.config.value.get_wifi()
-    if not ok:
-        return
-    
-    from .wifi.wifi import WiFiController
-    shared.wifi = WiFiController(ssid, psk)
+    # Setup the local HTTP server
+    shared.api.start()
 
-    # Setup WiFi connection handlers
-    shared.wifi.on_connecting = shared.board.on_wifi_connecting
-    shared.wifi.on_connected = shared.board.on_wifi_connected
-    shared.wifi.on_failed = shared.board.on_wifi_failed
-
+    # Try connecting to WiFi
     shared.wifi.connect()
     if not shared.wifi._connected:
         return
 
     # Start an infinite loop
     while True:
+        # Should check for wifi, check for wifi
+        if not shared.wifi._connected:
+            shared.wifi.connect()
+
         # Check for request data
         shared.requestqueue.poll()
+
+        # Check for updates on an interval
+        if update_manager.should_check_update():
+            update_manager.try_update()
 
 try:
     start()

@@ -8,11 +8,27 @@ from .board import layouts, basics, deprecated
 from .config.config import Config
 from .wifi.wifi import WiFiController
 from .otaupdate import update_manager
+from .ble import ble
+from .api import server, routes
 
 requestqueue: RequestQueue
 board: Board
 config: Config
 wifi: WiFiController
+api: server.Server
+
+def setup_config():
+    global config
+
+    config = Config()
+    config.load()
+
+def setup_request_queue():
+    global config, requestqueue
+    requestqueue = RequestQueue(
+        5,
+        config.value['homeassistant-ip'],
+    )
 
 def setup_board():
     global board, config
@@ -107,7 +123,7 @@ def setup_board():
         
         case _:
             raise Exception("Unknown layout: " + str(layout))
-        
+
     def new_request(key: str) -> Request:
         return Request(
             'press',
@@ -117,37 +133,86 @@ def setup_board():
                 "key": key,
             }),
         )
-    
-    board.on_update = update_manager.try_update
             
-    # Setup basic button handlers
     if isinstance(board, BasicButtonBoard):
         b = board
 
-        def on_success():
+        def on_req_success():
             b.led.off()
 
-        def on_failure():
-            asyncio.run(b.led.flash(100, 0, 0, times=2))
+        def on_req_failure():
+            asyncio.create_task(
+                b.led.flash(100, 0, 0, times=2)
+            )
 
         def on_press(key: str):
             req = new_request(key)
-            req.on_success = on_success
-            req.on_failure = on_failure
+            req.on_success = on_req_success
+            req.on_failure = on_req_failure
             requestqueue.add(req)
 
         b.on_press = on_press
+        board = b
         
     # Setup dial handlers
     if isinstance(board, DialBoard):
         b = board
 
         def on_dial_press(routine: deprecated.Routine):
-            b.on_press(routine.name)
+            board.on_press(routine.name)
 
         def on_dial_long_press(routine: deprecated.Routine):
-            b.on_press(routine.name + '-long')
+            board.on_press(routine.name + '-long')
 
         b.on_dial_press = on_dial_press
         b.on_dial_longpress = on_dial_long_press
-        
+        board = b
+
+def setup_wifi():
+    global config, wifi, board
+
+    ssid, psk, ok = config.value.get_wifi()
+    if not ok:
+        return
+    
+    wifi = WiFiController(ssid, psk)
+
+    wifi.on_connecting = board.on_wifi_connecting
+    wifi.on_connected = board.on_wifi_connected
+    wifi.on_failed = board.on_wifi_failed
+
+def setup_bluetooth():
+    global board
+
+    pairing_task = None
+
+    def on_pair():
+        async def pair():
+            pairing_task = asyncio.create_task(
+                ble.ble_server_task(),
+            )
+            
+            await asyncio.gather(pairing_task)
+            board._should_pair = False
+            board.preparing_pairing = False
+            board.accepting_inputs = True
+
+        asyncio.create_task(pair())
+
+    def on_pair_cancel():
+        if pairing_task is not None:
+            pairing_task.cancel()
+
+    board.on_pair = on_pair
+    board.on_pair_cancel = on_pair_cancel
+
+def setup_automatic_updates():
+    global board
+
+    board.on_update = update_manager.try_update
+
+def setup_api():
+    global api
+
+    api = server.Server()
+    routes.setup_routes(api)

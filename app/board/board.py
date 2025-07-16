@@ -1,4 +1,6 @@
+import asyncio
 from machine import Timer
+
 from .basics import PushButton, RgbLED
 from .deprecated import Routine, Wheel, Switch
 
@@ -29,6 +31,8 @@ class Board:
         # Timers for triggering special presses
         self._update_press_timer: Timer | None = None
         self._pair_press_timer: Timer | None = None
+
+        self._wifi_connecting = False
 
         def on_press(key: str):
             pass
@@ -142,13 +146,13 @@ class Board:
                 self._pair_press_timer.deinit()
 
     def on_wifi_connecting(self):
-        pass
+        self._wifi_connecting = True
 
     def on_wifi_connected(self):
-        pass
+        self._wifi_connecting = False
 
     def on_wifi_failed(self, failure: str):
-        pass
+        self._wifi_connecting = False
 
 class BasicButtonBoard(Board):
 
@@ -190,16 +194,33 @@ class BasicButtonBoard(Board):
         self.on_release(key)
 
     def on_wifi_connecting(self):
-        # Flash the LED
-        pass
+        super().on_wifi_connecting()
+        
+        async def loop():
+            on = False
+            while self._wifi_connecting:
+                if on:
+                    self.led.off()
+                else:
+                    self.led.do_color(50, 0, 50)
+                    
+                on = not on
+                await asyncio.sleep(0.2)
+
+        asyncio.create_task(loop())
+        self.enable()
 
     def on_wifi_connected(self):
-        # Flash the LED
-        pass
+        super().on_wifi_connected()
+
+        # Flash blue
+        asyncio.create_task(self.led.flash(0, 0, 50, times=2))
 
     def on_wifi_failed(self, failure: str):
+        super().on_wifi_failed(failure)
+
         # Flash the LED
-        print(failure)
+        asyncio.create_task(self.led.flash(50, 0, 0, times=3))
 
 class DialBoard(BasicButtonBoard):
 

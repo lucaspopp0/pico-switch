@@ -30,7 +30,6 @@ class WiFiController:
 
     def connect(self):
         if self._backoff:
-            print("Backing off WiFi connection")
             return
         
         if self._backoff_timer is not None:
