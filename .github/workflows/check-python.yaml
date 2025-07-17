@@ -16,6 +16,24 @@ concurrency:
 
 jobs:
 
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        uses: actions/checkout@v4
+      -
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3
+      -
+        name: Install yapf
+        run: |
+          pip3 install yapf
+      -
+        name: Format code
+        run: |
+          
+
   unittest:
     runs-on: ubuntu-latest
     steps:
