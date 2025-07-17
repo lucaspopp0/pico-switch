@@ -49,6 +49,7 @@ def _get_ip_value():
 def _get_ha_ip_value():
     return "ha-ip: " + config.value["home-assistant-ip"]
 
+
 async def ble_server_task():
     """Main BLE server task."""
     global _server, _conn_handle, _service, _server_running

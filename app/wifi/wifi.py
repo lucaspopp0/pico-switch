@@ -2,6 +2,7 @@ import network
 import time
 from machine import Timer
 
+
 class WiFiController:
 
     def __init__(
@@ -20,8 +21,8 @@ class WiFiController:
         self._backoff = False
         self._backoff_timer: Timer | None = None
 
-        self.on_connecting = lambda : None
-        self.on_connected = lambda : None
+        self.on_connecting = lambda: None
+        self.on_connected = lambda: None
 
         def on_failed(failure: str):
             pass
@@ -31,13 +32,13 @@ class WiFiController:
     def connect(self):
         if self._backoff:
             return
-        
+
         if self._backoff_timer is not None:
             self._backoff_timer.deinit()
 
         def back_off(_: Timer):
             self._backoff = False
-        
+
         self._backoff = True
         self._backoff_timer = Timer(
             -1,
@@ -47,7 +48,7 @@ class WiFiController:
         )
 
         self.on_connecting()
-        
+
         self.wlan.active(True)
         self.wlan.connect(
             self._ssid,
@@ -67,29 +68,23 @@ class WiFiController:
                     print('WiFi connected! (' + self.ip + ')')
                     self.on_connected()
                     return
-                
+
                 case network.STAT_NO_AP_FOUND:
                     self.on_failed(
-                        'WiFi connection failed: Network "' + self._ssid + '" not',
-                    )
+                        'WiFi connection failed: Network "' + self._ssid +
+                        '" not', )
                     return
-                
+
                 case network.STAT_WRONG_PASSWORD:
-                    self.on_failed(
-                        'WiFi connection failed: Wrong password',
-                    )
+                    self.on_failed('WiFi connection failed: Wrong password', )
                     return
-                
+
                 case network.STAT_CONNECT_FAIL:
-                    self.on_failed(
-                        'WiFi connection failed',
-                    )
+                    self.on_failed('WiFi connection failed', )
                     return
-                
+
                 case _:
                     print('Trying to connect to "' + self._ssid + '"...')
                     time.sleep(1)
 
-        self.on_failed(
-            'WiFi connection timed out after 10s',
-        )
+        self.on_failed('WiFi connection timed out after 10s', )

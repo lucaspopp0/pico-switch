@@ -50,8 +50,10 @@ class Wheel:
             self.timer.deinit()
             self.timer = None
 
-        self.timer = Timer(-1, mode=Timer.ONE_SHOT, period=1000, callback=lambda t: self._led_off())
-
+        self.timer = Timer(-1,
+                           mode=Timer.ONE_SHOT,
+                           period=1000,
+                           callback=lambda t: self._led_off())
 
     def _rotated(self):
         a = self.clk.value()
@@ -94,7 +96,10 @@ class Wheel:
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer = Timer(-1, mode=Timer.ONE_SHOT, period=PushButton.longpress_ms, callback=lpc)
+                self.longPressTimer = Timer(-1,
+                                            mode=Timer.ONE_SHOT,
+                                            period=PushButton.longpress_ms,
+                                            callback=lpc)
                 self._send_hook()
 
     def _long_action(self):
@@ -104,7 +109,7 @@ class Wheel:
     def _send_hook(self, long=False):
         if self.timer is not None:
             self.timer.deinit()
-            
+
         self._flash_color()
 
         if long:

@@ -2,6 +2,7 @@ import json
 import machine
 import binascii
 
+
 class ConfigValue(dict):
 
     # Return the wifi configuration, if it exists
@@ -16,6 +17,7 @@ class ConfigValue(dict):
 
         return ("", "", False)
 
+
 class Config:
 
     @staticmethod
@@ -24,7 +26,7 @@ class Config:
 
     filename = 'config.json'
     versionfile = 'app/.version'
-    
+
     def __init__(self):
         self.value = ConfigValue({})
         self.version = 'v0.0.0'

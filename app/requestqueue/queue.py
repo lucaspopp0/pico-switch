@@ -2,6 +2,7 @@ import select
 import socket
 from .request import Request
 
+
 # Polls multiple sockets in parallel, allowing sending
 # requests and then waiting for responses without blocking
 # the event loop
@@ -22,11 +23,10 @@ class RequestQueue:
         # Create a new poller, which can be used to poll
         # multiple sockets in parallel
         self.poller = select.poll()
-        
+
         # Set up a list of requests for the queue
         self._requests: list[Request] = []
         self.capacity = capacity
-
 
     def request_by_socket(self, sock: socket.Socket) -> Request | None:
         for req in self._requests:
@@ -67,7 +67,7 @@ class RequestQueue:
             # Nothing to process, use this time to clean up!
             self.prune_queue()
             return
-        
+
         # Handle results from polling
         for sock, event in events:
             if event & select.POLLIN:
@@ -75,12 +75,13 @@ class RequestQueue:
 
                 req = self.request_by_socket(sock)
                 if req is None:
-                    print("socket in queue has data, but could not tie it to a request")
+                    print(
+                        "socket in queue has data, but could not tie it to a request"
+                    )
                     sock.close()
                     return
 
                 self._handle_response(req)
-                
 
     # Handle data from polling
     def _handle_response(self, req: Request):

@@ -58,7 +58,7 @@ class PushButton:
             )
         else:
             self.on_release(str(self.key))
-            
+
             if self.long_press_timer is not None:
                 self.long_press_timer.deinit()
 

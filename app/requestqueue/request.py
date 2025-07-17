@@ -1,6 +1,7 @@
 import time
 import socket
 
+
 # Handlers for a single HTTP request
 class Request:
 
@@ -25,13 +26,13 @@ class Request:
 
         self.expiry = None
 
-        self.on_success = lambda : None
-        self.on_failure = lambda : None
+        self.on_success = lambda: None
+        self.on_failure = lambda: None
 
     # Send a request into the provided socket!
     def send(self, socket: socket.Socket):
         self.socket = socket
-        self.expiry = time.time() + Request.request_timeout_s   
+        self.expiry = time.time() + Request.request_timeout_s
         self.bytes_received = bytes([])
 
         print('Sending: ' + self.path)

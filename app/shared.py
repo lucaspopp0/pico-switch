@@ -17,11 +17,13 @@ config: Config
 wifi: WiFiController
 api: server.Server
 
+
 def setup_config():
     global config
 
     config = Config()
     config.load()
+
 
 def setup_request_queue():
     global config, requestqueue
@@ -30,13 +32,14 @@ def setup_request_queue():
         config.value['homeassistant-ip'],
     )
 
+
 def setup_board():
     global board, config
 
     layout = str(config.value['layout'])
 
     match layout:
-        
+
         case layouts.V3:
             board = BasicButtonBoard(
                 led=basics.RgbLED(18, 17, 16),
@@ -57,7 +60,7 @@ def setup_board():
                     "12": basics.PushButton([3], 12),
                 },
             )
-        
+
         case layouts.V4:
             board = BasicButtonBoard(
                 led=basics.RgbLED(16, 17, 18),
@@ -74,7 +77,7 @@ def setup_board():
                     "8": basics.PushButton([0], 7),
                 },
             )
-        
+
         case layouts.V5 | layouts.V6:
             led = basics.RgbLED(16, 17, 18)
 
@@ -94,8 +97,10 @@ def setup_board():
 
             # Setup the switch if V6
             if layout is layouts.V6:
+
                 def _on():
                     board.enable()
+
                 def _off():
                     board.disable()
 
@@ -103,7 +108,7 @@ def setup_board():
                     "on": _on,
                     "off": _off
                 })
-        
+
         case layouts.V7:
             board = BasicButtonBoard(
                 led=basics.RgbLED(18, 19, 20),
@@ -120,7 +125,7 @@ def setup_board():
                     "8": basics.PushButton([2], 8),
                 },
             )
-        
+
         case _:
             raise Exception("Unknown layout: " + str(layout))
 
@@ -133,7 +138,7 @@ def setup_board():
                 "key": key,
             }),
         )
-            
+
     if isinstance(board, BasicButtonBoard):
         b = board
 
@@ -141,9 +146,7 @@ def setup_board():
             b.led.off()
 
         def on_req_failure():
-            asyncio.create_task(
-                b.led.flash(100, 0, 0, times=2)
-            )
+            asyncio.create_task(b.led.flash(100, 0, 0, times=2))
 
         def on_press(key: str):
             req = new_request(key)
@@ -153,7 +156,7 @@ def setup_board():
 
         b.on_press = on_press
         board = b
-        
+
     # Setup dial handlers
     if isinstance(board, DialBoard):
         b = board
@@ -168,18 +171,20 @@ def setup_board():
         b.on_dial_longpress = on_dial_long_press
         board = b
 
+
 def setup_wifi():
     global config, wifi, board
 
     ssid, psk, ok = config.value.get_wifi()
     if not ok:
         return
-    
+
     wifi = WiFiController(ssid, psk)
 
     wifi.on_connecting = board.on_wifi_connecting
     wifi.on_connected = board.on_wifi_connected
     wifi.on_failed = board.on_wifi_failed
+
 
 def setup_bluetooth():
     global board
@@ -187,11 +192,10 @@ def setup_bluetooth():
     pairing_task = None
 
     def on_pair():
+
         async def pair():
-            pairing_task = asyncio.create_task(
-                ble.ble_server_task(),
-            )
-            
+            pairing_task = asyncio.create_task(ble.ble_server_task(), )
+
             await asyncio.gather(pairing_task)
             board._should_pair = False
             board.preparing_pairing = False
@@ -206,10 +210,12 @@ def setup_bluetooth():
     board.on_pair = on_pair
     board.on_pair_cancel = on_pair_cancel
 
+
 def setup_automatic_updates():
     global board
 
     board.on_update = update_manager.try_update
+
 
 def setup_api():
     global api

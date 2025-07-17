@@ -37,22 +37,27 @@ class Board:
 
         def on_press(key: str):
             pass
+
         self.on_press = on_press
 
         def on_release(key: str):
             pass
+
         self.on_release = on_release
 
         def on_update():
             pass
+
         self.on_update = on_update
 
         def on_pair():
             pass
+
         self.on_pair = on_pair
 
         def on_pair_cancel():
             pass
+
         self.on_pair_cancel = on_pair_cancel
 
     def enable(self):
@@ -60,19 +65,19 @@ class Board:
 
     def disable(self):
         self.accepting_inputs = False
-    
+
     # Holding two buttons indicates bluetooth pairing mode
     def _could_pair(self):
         return len(self._pressed) == 2
-        
+
     # Holding four buttons checks for software updates
     def _could_update(self):
         return len(self._pressed) == 4
-        
+
     # Update state variables when buttons are pressed
     def _button_press(self, key):
         self._pressed[str(key)] = True
-        
+
         # If four buttons are now pressed, start the
         # update press timer
         self._should_update = self._could_update()
@@ -87,7 +92,7 @@ class Board:
                 if self._could_update():
                     print("Checking for updates...")
                     self.on_update()
-            
+
             if self._update_press_timer is not None:
                 self._update_press_timer.deinit()
 
@@ -98,7 +103,6 @@ class Board:
                 callback=upc,
             )
 
-        
         else:
             # If two buttons are now pressed, start the
             # pairing press timer
@@ -112,10 +116,10 @@ class Board:
                 def cbk(_):
                     if self._should_pair:
                         self.on_pair()
-            
+
                 if self._pair_press_timer is not None:
                     self._pair_press_timer.deinit()
-                
+
                 self._pair_press_timer = Timer(
                     -1,
                     mode=Timer.ONE_SHOT,
@@ -136,7 +140,7 @@ class Board:
             self.preparing_update = False
             if self._update_press_timer is not None:
                 self._update_press_timer.deinit()
-        
+
         # If no longer preparing for BLE pairing, cancel the
         # timer and allow inputs again
         self._should_pair = self._could_pair()
@@ -155,13 +159,14 @@ class Board:
     def on_wifi_failed(self, failure: str):
         self._wifi_connecting = False
 
+
 class BasicButtonBoard(Board):
 
     def __init__(
         self,
         led: RgbLED,
         buttons: dict[str, PushButton],
-        flipped = False,
+        flipped=False,
     ):
         Board.__init__(self, flipped)
 
@@ -170,23 +175,23 @@ class BasicButtonBoard(Board):
 
         # Setup event handlers for buttons
         for button in self.buttons.values():
-            button.on_press = lambda key : self._on_button_press(key)
-            button.on_long_press = lambda key : self._on_button_long_press(key)
-            button.on_release = lambda key : self._on_button_release(key)
+            button.on_press = lambda key: self._on_button_press(key)
+            button.on_long_press = lambda key: self._on_button_long_press(key)
+            button.on_release = lambda key: self._on_button_release(key)
 
     def _on_button_press(self, key: str):
         self._button_press(key)
 
         if not self.accepting_inputs:
             return
-        
+
         self.led.do_color(0, 0, 50)
         self.on_press(key)
 
     def _on_button_long_press(self, key: str):
         if not self.accepting_inputs:
             return
-        
+
         self.led.do_color(0, 50, 50)
         self.on_press(key + '-long')
 
@@ -196,7 +201,7 @@ class BasicButtonBoard(Board):
 
     def on_wifi_connecting(self):
         super().on_wifi_connecting()
-        
+
         async def loop():
             on = False
             while self._wifi_connecting:
@@ -204,7 +209,7 @@ class BasicButtonBoard(Board):
                     self.led.off()
                 else:
                     self.led.do_color(50, 0, 50)
-                    
+
                 on = not on
                 await asyncio.sleep(0.2)
 
@@ -223,6 +228,7 @@ class BasicButtonBoard(Board):
         # Flash the LED
         asyncio.create_task(self.led.flash(50, 0, 0, times=3))
 
+
 class DialBoard(BasicButtonBoard):
 
     def __init__(
@@ -232,7 +238,7 @@ class DialBoard(BasicButtonBoard):
         dial: Wheel,
         wheel_routines: list[dict],
         switch: Switch | None = None,
-        flipped = False,
+        flipped=False,
     ):
         BasicButtonBoard.__init__(
             self,
@@ -242,14 +248,14 @@ class DialBoard(BasicButtonBoard):
         )
 
         self.switch = switch
-        
+
         # Set up the dial
         dialScenes = []
         if wheel_routines is not None:
             for routine in wheel_routines:
                 scene = Routine(routine["name"], routine["rgb"], 0)
                 dialScenes.append(scene)
-        
+
         self.dial = dial
         self.dial.size = len(dialScenes)
         self.dial.options = dialScenes
@@ -277,7 +283,7 @@ class DialBoard(BasicButtonBoard):
     def enable(self):
         super().enable()
         self.dial.enabled = True
-    
+
     def disable(self):
         super().disable()
         self.dial.enabled = False

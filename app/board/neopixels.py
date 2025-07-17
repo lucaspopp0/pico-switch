@@ -10,8 +10,9 @@ class PixelCoords:
         self.chain = chain
         self.offset = offset
 
+
 class NeoPixels:
-    
+
     def __init__(self):
         self.rows = [
             NeoPixel(Pin(0), 6),
@@ -54,7 +55,7 @@ class NeoPixels:
             return PixelCoords(3, 2)
         else:
             raise Exception("unknown key: ", key)
-        
+
     # Set the RGB value of both pixels for a button
     def set_pixels(
         self,
@@ -72,14 +73,14 @@ class NeoPixels:
         for row in self.rows:
             for i in range(len(row)):
                 row[i] = rgb
-            
+
             row.write()
 
     async def flash(
         self,
         rgb,
-        seconds = 0.1,
-        times = 1,
+        seconds=0.1,
+        times=1,
     ):
         for _ in range(times):
             self.set_all(rgb)
