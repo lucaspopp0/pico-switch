@@ -1,0 +1,31 @@
+name: check-python
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  unittest:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        uses: actions/checkout@v4
+      -
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3
+      -
+        name: Run unit tests
+        run: |
+          make unittest
