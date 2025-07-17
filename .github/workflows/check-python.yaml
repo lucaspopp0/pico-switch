@@ -75,7 +75,13 @@ jobs:
       -
         name: Commit changes and push
         if: steps.detect-changes.outputs.changes == 'true'
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          git config \
+            url."https://x-access-token:${APP_TOKEN}@github.com".insteadOf
+            "https://github.com"
+
           git add .
           git commit -m "[bot] auto-format"
           
