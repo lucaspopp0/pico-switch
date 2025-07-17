@@ -59,7 +59,7 @@ jobs:
           git add .
           git status
 
-          if [[ -z "$(git status -s)" ]]; then
+          if [[ -n "$(git status -s)" ]]; then
             echo "changes=true" | tee -a "$GITHUB_OUTPUT"
           else
             echo "changes=false" | tee -a "$GITHUB_OUTPUT"
@@ -86,7 +86,7 @@ jobs:
           # push commit
           git push
 
-  unittest:
+  unit-test:
     runs-on: ubuntu-latest
     steps:
       -
@@ -98,4 +98,4 @@ jobs:
       -
         name: Run unit tests
         run: |
-          make unittest
+          make unit-test

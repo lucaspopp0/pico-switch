@@ -2,6 +2,6 @@ SHELL = /bin/bash
 
 PYTHON = python3
 
-unittest:
+unit-test:
 	@$(PYTHON) -m unittest tests/**
-.PHONY: unittest
+.PHONY: unit-test
