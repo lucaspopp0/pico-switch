@@ -1,19 +1,16 @@
 import time
 
 from . import config
-
 config.read()
 config.read_version()
 
 from .board import board
-
 board.setup(config.value)
-
 
 def startApp():
     if board.shared is None:
         return
-
+    
     print('Starting app')
     from . import handlers
     handlers.setup_handlers(board.shared)
@@ -22,11 +19,11 @@ def startApp():
     from . import wifi
     wifi.connect()
     board.shared.led.off()
-
+    
     # If connection fails, bail out
     if not wifi.is_connected():
         raise RuntimeError('wifi connection failed')
-
+    
     # Enable the board
     board.shared.accepting_inputs = True
 
@@ -39,7 +36,7 @@ def startApp():
     from . import routes
     from .server import server
     from . import ble
-
+    
     def ble_pairing():
         board.accepting_inputs = False
         board.shared.led.do_color(50, 0, 50)
@@ -71,20 +68,20 @@ def startApp():
         # Check for updates on an interval
         if update_manager.should_check_update():
             update_manager.try_update()
-
+            
         # Handle pairing requests
         if board.shared.needs_pairing:
             print("Pairing...")
             ble_pairing()
             board.shared.needs_pairing = False
 
-
 try:
     startApp()
 except KeyboardInterrupt as interrupt:
     print("Received interrupt. Shutting down")
-
+    
     try:
         board.shared.led.off()
     finally:
         pass
+    

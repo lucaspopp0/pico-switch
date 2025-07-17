@@ -3,7 +3,6 @@ import time
 import asyncio
 import errno
 
-
 # Configure a pushbutton using one or more pins using a PULL_UP mode
 class PushButton:
 
@@ -13,14 +12,14 @@ class PushButton:
         self.pins = pins
         self.key = key
 
-        self.gpios = list(map(lambda pin: Pin(pin, Pin.IN, Pin.PULL_UP), pins))
+        self.gpios = list(map(lambda pin : Pin(pin, Pin.IN, Pin.PULL_UP), pins))
 
         self.last_pressed = False
         self.pressed = False
 
-        self.on_press = lambda key: None
-        self.on_long_press = lambda key: None
-        self.on_release = lambda key: None
+        self.on_press = lambda key : None
+        self.on_long_press = lambda key : None
+        self.on_release = lambda key : None
 
         self.long_press_timer = Timer()
 
@@ -28,8 +27,7 @@ class PushButton:
             self._on_interrupt()
 
         for gpio in self.gpios:
-            gpio.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING,
-                     handler=irq_handler)
+            gpio.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=irq_handler)
 
     def _on_interrupt(self):
         self.last_pressed = self.pressed
@@ -58,7 +56,6 @@ class PushButton:
         else:
             self.on_release(str(self.key))
             self.long_press_timer.deinit()
-
 
 class RgbLED:
 
@@ -89,7 +86,7 @@ class RgbLED:
         self.g.duty_u16(RgbLED.pwmFreq(g))
         self.b.duty_u16(RgbLED.pwmFreq(b))
 
-    async def flash(self, r, g, b, seconds=0.1, times=1):
+    async def flash(self, r, g, b, seconds = 0.1, times = 1):
         for x in range(times):
             self.do_color(r, g, b)
             time.sleep(seconds)

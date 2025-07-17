@@ -1,14 +1,12 @@
 from machine import Pin, Timer
 from .basics import PushButton
 
-
 class Routine:
 
     def __init__(self, name, color, button):
         self.name = name
         self.color = color
         self.button = button
-
 
 class Wheel:
 
@@ -25,15 +23,15 @@ class Wheel:
         self.size = len(options)
         self.value = 0
 
-        self.on_press = lambda routine: None
-        self.on_long_press = lambda routine: None
+        self.on_press = lambda routine : None
+        self.on_long_press = lambda routine : None
 
         self.last_pressed = False
         self.pressed = False
         self.longPressTimer = Timer()
 
-        self.clk.irq(lambda p: self._rotated())
-        self.sw.irq(lambda p: self._pressed())
+        self.clk.irq(lambda p:self._rotated())
+        self.sw.irq(lambda p:self._pressed())
 
         self.timer = None
         self._flash_color()
@@ -50,9 +48,8 @@ class Wheel:
             self.timer.deinit()
             self.timer = None
 
-        self.timer = Timer(mode=Timer.ONE_SHOT,
-                           period=1000,
-                           callback=lambda t: self._led_off())
+        self.timer = Timer(mode=Timer.ONE_SHOT, period=1000, callback=lambda t: self._led_off())
+
 
     def _rotated(self):
         a = self.clk.value()
@@ -91,13 +88,10 @@ class Wheel:
         if self.pressed != self.last_pressed:
             if self.pressed:
                 print("pressed: " + self.current_option().name)
-
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT,
-                                         period=PushButton.longpress_ms,
-                                         callback=lpc)
+                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=PushButton.longpress_ms, callback=lpc)
                 self._send_hook()
 
     def _long_action(self):
@@ -119,21 +113,20 @@ class Wheel:
         color = self.current_option().color
         self.led.do_color(color[0], color[1], color[2])
 
-
 class Switch:
-
+    
     def __init__(self, powerPin, switchPin, callbacks):
         self.powerPin = Pin(powerPin, Pin.OUT)
         self.switchPin = Pin(switchPin, Pin.IN)
         self.callbacks = callbacks
-
+        
         self.powerPin.value(1)
-
+        
         def _callback(pin):
             self.callback(pin.value())
-
+        
         self.switchPin.irq(_callback)
-
+        
     def callback(self, value):
         if value:
             self.callbacks["on"]()

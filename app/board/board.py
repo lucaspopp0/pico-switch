@@ -2,7 +2,6 @@ from machine import Timer
 from .basics import PushButton, RgbLED
 from .deprecated import Routine, Wheel, Switch
 
-
 class Board:
 
     update_longpress_ms = 5000
@@ -21,18 +20,18 @@ class Board:
         self._pressed = {}
         self._update_press_timer = Timer()
         self._ble_press_timer = Timer()
-
+        
         self._should_update = False
         self._should_pair = False
         self.needs_pairing = False
 
-        self.on_release = lambda: None
-        self.on_update = lambda: None
-        self.on_press = lambda key: None
-        self.on_long_press = lambda key: None
+        self.on_release = lambda : None
+        self.on_update = lambda : None
+        self.on_press = lambda key : None
+        self.on_long_press = lambda key : None
 
-        self.on_dial_press = lambda routine: None
-        self.on_dial_long_press = lambda routine: None
+        self.on_dial_press = lambda routine : None
+        self.on_dial_long_press = lambda routine : None
 
         if self.layout == "v4":
             self.led = RgbLED(16, 17, 18)
@@ -119,10 +118,14 @@ class Board:
                 if self.dial is not None:
                     self.dial.enabled = False
 
-            self.switch = Switch(27, 28, {"on": _on, "off": _off})
+
+            self.switch = Switch(27, 28, {
+                "on": _on,
+                "off": _off
+            })
         elif self.layout == "v7":
             self.led = RgbLED(18, 19, 20)
-
+            
             self.buttons = {
                 "on": PushButton([10, 9], 'on'),
                 "off": PushButton([5, 4], 'off'),
@@ -140,14 +143,13 @@ class Board:
 
         # Setup event handlers for buttons
         for button in self.buttons.values():
-
             def on_press(key: str):
                 self._button_press(key)
                 self.on_press(key)
 
             button.on_press = on_press
 
-            button.on_long_press = lambda key: self.on_long_press(key)
+            button.on_long_press = lambda key : self.on_long_press(key)
 
             def on_release(key: str):
                 self._button_unpress(key)
@@ -157,7 +159,6 @@ class Board:
 
         # Setup event handlers for the dial, if it exists
         if self.dial is not None:
-
             def on_dial_press(routine):
                 self.on_dial_press(routine)
 
@@ -172,22 +173,22 @@ class Board:
     # is trying to trigger an update or not
     def _button_press(self, key):
         print("Pressed " + str(key))
-
+        
         self._pressed[str(key)] = True
-
+        
         self._should_update = self._could_update()
         if self._should_update:
             self._should_pair = False
             self.accepting_inputs = False
             self.preparing_update = True
-
+            
             print("Update press detected")
 
             def upc(_):
                 if self._could_update():
                     print("Checking for updates...")
                     self.on_update()
-
+            
             self._update_press_timer.deinit()
             self._update_press_timer.init(
                 mode=Timer.ONE_SHOT,
@@ -207,7 +208,7 @@ class Board:
                 def ble_trigger(_):
                     if self._should_pair:
                         self.needs_pairing = True
-
+                
                 self._ble_press_timer.deinit()
                 self._ble_press_timer.init(
                     mode=Timer.ONE_SHOT,
@@ -219,7 +220,7 @@ class Board:
     def _button_unpress(self, key):
         if str(key) in self._pressed:
             del self._pressed[str(key)]
-
+        
         # If no longer preparing for an update, cancel the
         # timer and allow inputs again
         self._should_update = self._could_update()
@@ -227,7 +228,7 @@ class Board:
             self.accepting_inputs = True
             self.preparing_update = False
             self._update_press_timer.deinit()
-
+        
         # If no longer preparing for BLE pairing, cancel the
         # timer and allow inputs again
         self._should_pair = self._could_pair()
@@ -235,16 +236,15 @@ class Board:
             self.preparing_pairing = False
             self.accepting_inputs = True
             self._ble_press_timer.deinit()
-
+    
     # Holding two buttons indicates bluetooth pairing mode
     def _could_pair(self):
         return len(self._pressed) == 2
-
+        
     # Holding four buttons checks for software updates
     def _could_update(self):
         return len(self._pressed) == 4
-
-
+                
 def setup(config):
     global shared
 
