@@ -1,0 +1,107 @@
+name: check-python
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      -
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3
+      -
+        name: Configure git
+        run: |
+          git config --global \
+            user.name 'lucaspopp0-bot[bot]'
+
+          git config --global \
+            user.email 'lucaspopp0-bot[bot]@users.noreply.github.com'
+      -
+        name: Checkout ref for commit
+        run: |
+          git checkout "${{ github.head_ref || github.ref_name }}"
+      -
+        name: Install yapf
+        run: |
+          pip3 install yapf
+      -
+        name: Format code
+        run: |
+          find . \
+            -name '*.py' \
+            -not -path '**/lib/**' \
+            -exec \
+              'python3' '-m' \
+                'yapf' '-i' '{}' ';'
+      -
+        name: Detect changes
+        id: detect-changes
+        run: |
+          git add .
+          git status
+
+          if [[ -n "$(git status -s)" ]]; then
+            echo "changes=true" | tee -a "$GITHUB_OUTPUT"
+          else
+            echo "changes=false" | tee -a "$GITHUB_OUTPUT"
+          fi
+      -
+        name: Generate app token
+        id: app-token
+        if: steps.detect-changes.outputs.changes == 'true'
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ vars.BOT_APP_ID }}
+          private_key: ${{ secrets.BOT_APP_KEY }}
+      -
+        name: Commit changes and push
+        if: steps.detect-changes.outputs.changes == 'true'
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config \
+            url."https://x-access-token:${APP_TOKEN}@github.com".insteadOf \
+            "https://github.com"
+
+          git add .
+          git commit -m "[bot] auto-format"
+          
+          # Output commit hash
+          COMMIT_HASH=$(git show --no-patch --format="%h")
+          echo "commit-hash=$COMMIT_HASH" | tee -a "$GITHUB_OUTPUT"
+
+          # push commit
+          git push
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        uses: actions/checkout@v4
+      -
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3
+      -
+        name: Run unit tests
+        run: |
+          make unit-test
