@@ -14,7 +14,6 @@ version = None
 
 uuid = binascii.hexlify(machine.unique_id()).upper()
 
-
 def info():
     global uuid, version, value
     safe_value = value.copy()
@@ -24,7 +23,6 @@ def info():
         "_version": version,
         "config": safe_value,
     })
-
 
 def read():
     global value
@@ -38,11 +36,9 @@ def read():
             print(e)
             value = default_value
 
-
 def write():
     with open(file_name, 'w') as f:
         json.dump(value, f)
-
 
 def read_version():
     global version
