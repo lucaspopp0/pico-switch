@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
 
-  fmt:
+  format:
     runs-on: ubuntu-latest
     steps:
       -
