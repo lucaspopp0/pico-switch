@@ -2,9 +2,11 @@ import os, gc
 from time import sleep
 from .httpclient import HttpClient
 
+
 def isGreater(version1, version2):
+
     def parse(version):
-        return list(map(lambda x : int(x), version.strip('v').split('.')))
+        return list(map(lambda x: int(x), version.strip('v').split('.')))
 
     v1 = parse(version1)
     v2 = parse(version2)
@@ -26,17 +28,28 @@ def isGreater(version1, version2):
 
     return False
 
+
 class OTAUpdater:
     """
     A class to update your MicroController with the latest version from a GitHub tagged release,
     optimized for low power usage.
     """
 
-    def __init__(self, led, github_repo, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
+    def __init__(self,
+                 led,
+                 github_repo,
+                 github_src_dir='',
+                 module='',
+                 main_dir='main',
+                 new_version_dir='next',
+                 secrets_file=None,
+                 headers={}):
         self.led = led
         self.http_client = HttpClient(headers=headers)
-        self.github_repo = github_repo.rstrip('/').replace('https://github.com/', '')
-        self.github_src_dir = '' if len(github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
+        self.github_repo = github_repo.rstrip('/').replace(
+            'https://github.com/', '')
+        self.github_src_dir = '' if len(
+            github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
         self.module = module.rstrip('/')
         self.main_dir = main_dir
         self.new_version_dir = new_version_dir
@@ -61,7 +74,9 @@ class OTAUpdater:
 
         (current_version, latest_version) = self._check_for_new_version()
         if isGreater(latest_version, current_version):
-            print('New version available, will download and install on next reboot')
+            print(
+                'New version available, will download and install on next reboot'
+            )
             self._create_new_version_file(latest_version)
             return True
 
@@ -79,7 +94,8 @@ class OTAUpdater:
 
         if self.new_version_dir in os.listdir(self.module):
             if '.version' in os.listdir(self.modulepath(self.new_version_dir)):
-                latest_version = self.get_version(self.modulepath(self.new_version_dir), '.version')
+                latest_version = self.get_version(
+                    self.modulepath(self.new_version_dir), '.version')
                 print('New update found: ', latest_version)
                 OTAUpdater._using_network(ssid, password)
                 self.install_update_if_available()
@@ -114,7 +130,6 @@ class OTAUpdater:
 
         return False
 
-
     @staticmethod
     def _using_network(ssid, password):
         import network
@@ -134,7 +149,8 @@ class OTAUpdater:
 
     def _create_new_version_file(self, latest_version):
         self.mkdir(self.modulepath(self.new_version_dir))
-        with open(self.modulepath(self.new_version_dir + '/.version'), 'w') as versionfile:
+        with open(self.modulepath(self.new_version_dir + '/.version'),
+                  'w') as versionfile:
             versionfile.write(latest_version)
             versionfile.close()
 
@@ -146,7 +162,9 @@ class OTAUpdater:
         return '0.0'
 
     def get_latest_version(self):
-        latest_release = self.http_client.get('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
+        latest_release = self.http_client.get(
+            'https://api.github.com/repos/{}/releases/latest'.format(
+                self.github_repo))
         gh_json = latest_release.json()
         try:
             version = gh_json['tag_name']
@@ -154,8 +172,7 @@ class OTAUpdater:
             print(
                 "Release not found: \n",
                 "Please ensure release as marked as 'latest', rather than pre-release \n",
-                "github api message: \n {} \n ".format(gh_json)
-            )
+                "github api message: \n {} \n ".format(gh_json))
         latest_release.close()
         return version
 
@@ -169,15 +186,21 @@ class OTAUpdater:
             except:
                 continue
 
-        print('Version {} downloaded to {}'.format(version, self.modulepath(self.new_version_dir)))
+        print('Version {} downloaded to {}'.format(
+            version, self.modulepath(self.new_version_dir)))
 
     def _download_all_files(self, version, sub_dir=''):
-        url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
+        url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(
+            self.github_repo, self.github_src_dir, self.main_dir, sub_dir,
+            version)
         gc.collect()
         file_list = self.http_client.get(url)
         file_list_json = file_list.json()
         for file in file_list_json:
-            path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
+            path = self.modulepath(
+                self.new_version_dir + '/' +
+                file['path'].replace(self.main_dir +
+                                     '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
                 self.led.do_color(5, 1, 0)
                 gitPath = file['path']
@@ -196,27 +219,37 @@ class OTAUpdater:
         file_list.close()
 
     def _download_file(self, version, gitPath, path):
-        self.http_client.get('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath), saveToFile=path)
+        self.http_client.get(
+            'https://raw.githubusercontent.com/{}/{}/{}'.format(
+                self.github_repo, version, gitPath),
+            saveToFile=path)
 
     def _copy_secrets_file(self):
         if self.secrets_file:
             fromPath = self.modulepath(self.main_dir + '/' + self.secrets_file)
-            toPath = self.modulepath(self.new_version_dir + '/' + self.secrets_file)
-            print('Copying secrets file from {} to {}'.format(fromPath, toPath))
+            toPath = self.modulepath(self.new_version_dir + '/' +
+                                     self.secrets_file)
+            print('Copying secrets file from {} to {}'.format(
+                fromPath, toPath))
             self._copy_file(fromPath, toPath)
             print('Copied secrets file from {} to {}'.format(fromPath, toPath))
 
     def _delete_old_version(self):
-        print('Deleting old version at {} ...'.format(self.modulepath(self.main_dir)))
+        print('Deleting old version at {} ...'.format(
+            self.modulepath(self.main_dir)))
         self._rmtree(self.modulepath(self.main_dir))
-        print('Deleted old version at {} ...'.format(self.modulepath(self.main_dir)))
+        print('Deleted old version at {} ...'.format(
+            self.modulepath(self.main_dir)))
 
     def _install_new_version(self):
-        print('Installing new version at {} ...'.format(self.modulepath(self.main_dir)))
+        print('Installing new version at {} ...'.format(
+            self.modulepath(self.main_dir)))
         if self._os_supports_rename():
-            os.rename(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
+            os.rename(self.modulepath(self.new_version_dir),
+                      self.modulepath(self.main_dir))
         else:
-            self._copy_directory(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
+            self._copy_directory(self.modulepath(self.new_version_dir),
+                                 self.modulepath(self.main_dir))
             self._rmtree(self.modulepath(self.new_version_dir))
         print('Update installed, please reboot now')
 
@@ -243,14 +276,16 @@ class OTAUpdater:
         for entry in os.ilistdir(fromPath):
             is_dir = entry[1] == 0x4000
             if is_dir:
-                self._copy_directory(fromPath + '/' + entry[0], toPath + '/' + entry[0])
+                self._copy_directory(fromPath + '/' + entry[0],
+                                     toPath + '/' + entry[0])
             else:
-                self._copy_file(fromPath + '/' + entry[0], toPath + '/' + entry[0])
+                self._copy_file(fromPath + '/' + entry[0],
+                                toPath + '/' + entry[0])
 
     def _copy_file(self, fromPath, toPath):
         with open(fromPath) as fromFile:
             with open(toPath, 'w') as toFile:
-                CHUNK_SIZE = 512 # bytes
+                CHUNK_SIZE = 512  # bytes
                 data = fromFile.read(CHUNK_SIZE)
                 while data:
                     toFile.write(data)
@@ -265,7 +300,7 @@ class OTAUpdater:
         except:
             return False
 
-    def _mk_dirs(self, path:str):
+    def _mk_dirs(self, path: str):
         paths = path.split('/')
 
         pathToCreate = ''
@@ -274,13 +309,12 @@ class OTAUpdater:
             pathToCreate = pathToCreate + x + '/'
 
     # different micropython versions act differently when directory already exists
-    def mkdir(self, path:str):
+    def mkdir(self, path: str):
         try:
             os.mkdir(path)
         except OSError as exc:
             if exc.args[0] == 17:
                 pass
-
 
     def modulepath(self, path):
         return self.module + '/' + path if self.module else path

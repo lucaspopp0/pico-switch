@@ -1,11 +1,9 @@
-name: pr
+name: check-workflows
 
 on:
   pull_request:
-    types:
-      - synchronize
-      - opened
-      - reopened
+    paths:
+      - '.github/workflows/**'
 
 permissions:
   contents: write
@@ -20,7 +18,7 @@ concurrency:
 
 jobs:
 
-  setup:
+  detect-changes:
     runs-on: ubuntu-latest
     outputs:
       tag-and-release: ${{ steps.changes.outputs.tag-and-release }}
@@ -37,7 +35,7 @@ jobs:
             tag-and-release:
               - '.github/workflows/tag-and-release.yaml'
 
-  preview-release:
-    needs: setup
-    if: ${{ needs.setup.outputs.tag-and-release == 'true' }}
+  release:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.tag-and-release == 'true' }}
     uses: ./.github/workflows/tag-and-release.yaml

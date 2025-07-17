@@ -30,6 +30,7 @@ import socket
 import sys
 import io
 
+
 class Server:
 
     def __init__(self, host="0.0.0.0", port=80):
@@ -52,23 +53,22 @@ class Server:
         self._sock.bind((self._host, self._port))
         self._sock.listen(1)
         print("Server listening on :%d" % self._port)
-            
-    
+
     def poll(self):
         if self._sock is None:
             return
-        
+
         connect = None
         address = None
-        
+
         try:
             self._sock.settimeout(0.5)
             connect, address = self._sock.accept()
         except Exception as e:
             return
-            
+
         self._connect = connect
-        
+
         try:
             self._sock.settimeout(15)
             request = self.get_request()
@@ -97,8 +97,11 @@ class Server:
 
     def add_route(self, path, handler, method="GET"):
         """ Add new route  """
-        self._routes.append(
-            {"path": path, "handler": handler, "method": method})
+        self._routes.append({
+            "path": path,
+            "handler": handler,
+            "method": method
+        })
 
     def send(self, data):
         """ Send data to client """
