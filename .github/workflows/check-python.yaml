@@ -77,7 +77,7 @@ jobs:
         if: steps.detect-changes.outputs.changes == 'true'
         run: |
           git add .
-          git commit -m "[bot] ${INCRM}"
+          git commit -m "[bot] auto-format"
           
           # Output commit hash
           COMMIT_HASH=$(git show --no-patch --format="%h")
