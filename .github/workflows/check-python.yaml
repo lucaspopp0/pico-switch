@@ -74,6 +74,12 @@ jobs:
           app_id: ${{ vars.BOT_APP_ID }}
           private_key: ${{ secrets.BOT_APP_KEY }}
       -
+        name: Commit
+        uses: dsanders11/github-app-commit-action@v1
+        with:
+          message: '[bot] auto-format'
+          token: ${{ steps.app-token.outputs.token }}
+      -
         name: Commit changes and push
         if: steps.detect-changes.outputs.changes == 'true'
         env:
