@@ -13,7 +13,7 @@ TYPE_CHAR_UUID = bluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
 NAME_CHAR_UUID = bluetooth.UUID("19B10001-E8F2-537E-4F6C-D104768A1214")
 LAYOUT_CHAR_UUID = bluetooth.UUID("19B10002-E8F2-537E-4F6C-D104768A1214")
 VERSION_CHAR_UUID = bluetooth.UUID("19B10003-E8F2-537E-4F6C-D104768A1214")
-IP_CHAR_UUID = bluetooth.UUID("19B10004-E8F2-537E-4F6C-D104768A1214")
+IP_CHAR_UUID = bluetooth.UUID("19B10004-E8F2-537E-4F6Cg-D104768A1214")
 HA_IP_CHAR_UUID = bluetooth.UUID("19B10004-E8F2-537E-4F6C-D104768A1214")
 
 # BLE advertising name
@@ -50,7 +50,7 @@ def _get_ha_ip_value():
     return "ha-ip: " + config.value["home-assistant-ip"]
 
 
-async def _ble_server_task():
+async def ble_server_task():
     """Main BLE server task."""
     global _server, _conn_handle, _service, _server_running
 
@@ -143,8 +143,3 @@ async def _ble_server_task():
             print("Connection terminated")
     except Exception as e:
         print("BLE error:", e)
-
-
-def start_ble_on_demand():
-    """Start BLE server on demand (called from button hold)."""
-    asyncio.run(_ble_server_task())

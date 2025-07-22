@@ -25,15 +25,21 @@ class Wheel:
         self.size = len(options)
         self.value = 0
 
-        self.on_press = lambda routine: None
-        self.on_long_press = lambda routine: None
+        def on_press(routine: Routine):
+            pass
+
+        def on_long_press(routine: Routine):
+            pass
+
+        self.on_press = on_press
+        self.on_long_press = on_long_press
 
         self.last_pressed = False
         self.pressed = False
-        self.longPressTimer = Timer()
+        self.longPressTimer: Timer | None = None
 
-        self.clk.irq(lambda p: self._rotated())
-        self.sw.irq(lambda p: self._pressed())
+        self.clk.irq(lambda _: self._rotated())
+        self.sw.irq(lambda _: self._pressed())
 
         self.timer = None
         self._flash_color()
@@ -48,11 +54,11 @@ class Wheel:
     def _reset_timer(self):
         if self.timer != None:
             self.timer.deinit()
-            self.timer = None
 
-        self.timer = Timer(mode=Timer.ONE_SHOT,
+        self.timer = Timer(-1,
+                           mode=Timer.ONE_SHOT,
                            period=1000,
-                           callback=lambda t: self._led_off())
+                           callback=lambda _: self._led_off())
 
     def _rotated(self):
         a = self.clk.value()
@@ -95,9 +101,10 @@ class Wheel:
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT,
-                                         period=PushButton.longpress_ms,
-                                         callback=lpc)
+                self.longPressTimer = Timer(-1,
+                                            mode=Timer.ONE_SHOT,
+                                            period=PushButton.longpress_ms,
+                                            callback=lpc)
                 self._send_hook()
 
     def _long_action(self):
@@ -105,7 +112,9 @@ class Wheel:
             self._send_hook(True)
 
     def _send_hook(self, long=False):
-        self.timer.deinit()
+        if self.timer is not None:
+            self.timer.deinit()
+
         self._flash_color()
 
         if long:
