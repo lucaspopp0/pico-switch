@@ -17,13 +17,13 @@ class TestOtaupdateOtaUpdater(unittest.TestCase):
 
     def test_ota_updater_class_exists(self):
         from app.otaupdate import ota_updater
-        
+
         self.assertTrue(hasattr(ota_updater, 'OTAUpdater'))
         self.assertTrue(callable(getattr(ota_updater, 'OTAUpdater', None)))
 
     def test_ota_updater_instantiation(self):
         from app.otaupdate import ota_updater
-        
+
         try:
             updater = ota_updater.OTAUpdater("test_repo", "main", "test_token")
             self.assertIsNotNone(updater)

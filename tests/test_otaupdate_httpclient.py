@@ -17,13 +17,13 @@ class TestOtaupdateHttpclient(unittest.TestCase):
 
     def test_http_client_class_exists(self):
         from app.otaupdate import httpclient
-        
+
         self.assertTrue(hasattr(httpclient, 'HttpClient'))
         self.assertTrue(callable(getattr(httpclient, 'HttpClient', None)))
 
     def test_http_client_instantiation(self):
         from app.otaupdate import httpclient
-        
+
         try:
             client = httpclient.HttpClient()
             self.assertIsNotNone(client)
