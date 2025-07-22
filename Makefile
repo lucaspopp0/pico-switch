@@ -15,6 +15,7 @@ unit-test:
 	@$(COVERAGE) run -m unittest
 	
 	@$(COVERAGE) report
+	@$(COVERAGE) xml
 
 	@make clean-cache
 .PHONY: unit-test
