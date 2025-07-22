@@ -17,16 +17,16 @@ class TestBleBle(unittest.TestCase):
 
     def test_ble_server_task_exists(self):
         from app.ble import ble
-        
+
         self.assertTrue(hasattr(ble, 'ble_server_task'))
         self.assertTrue(callable(getattr(ble, 'ble_server_task', None)))
 
     @patch('app.ble.ble.aioble')
     def test_ble_server_task_callable(self, mock_aioble):
         from app.ble import ble
-        
+
         task_func = getattr(ble, 'ble_server_task', None)
-        
+
         try:
             if task_func:
                 task = task_func()

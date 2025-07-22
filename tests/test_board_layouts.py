@@ -31,14 +31,20 @@ class TestBoardLayouts(unittest.TestCase):
         self.assertEqual(layouts.V9, "v9")
 
     def test_all_layouts_are_strings(self):
-        layouts_list = [layouts.V3, layouts.V4, layouts.V5, layouts.V6, layouts.V7, layouts.V8, layouts.V9]
-        
+        layouts_list = [
+            layouts.V3, layouts.V4, layouts.V5, layouts.V6, layouts.V7,
+            layouts.V8, layouts.V9
+        ]
+
         for layout in layouts_list:
             self.assertIsInstance(layout, str)
 
     def test_all_layouts_are_unique(self):
-        layouts_list = [layouts.V3, layouts.V4, layouts.V5, layouts.V6, layouts.V7, layouts.V8, layouts.V9]
-        
+        layouts_list = [
+            layouts.V3, layouts.V4, layouts.V5, layouts.V6, layouts.V7,
+            layouts.V8, layouts.V9
+        ]
+
         self.assertEqual(len(layouts_list), len(set(layouts_list)))
 
 
