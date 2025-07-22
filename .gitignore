@@ -3,8 +3,5 @@
 .claude
 .venv
 **/__pycache__/**
-<<<<<<< HEAD
-=======
 coverage.xml
 .coverage
->>>>>>> v2
