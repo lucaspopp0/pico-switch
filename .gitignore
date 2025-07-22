@@ -1,3 +1,7 @@
 .idea/
 .DS_Store
 .claude
+.venv
+**/__pycache__/**
+coverage.xml
+.coverage
