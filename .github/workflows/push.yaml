@@ -1,0 +1,14 @@
+name: push
+
+on:
+  push:
+    branches: [v2]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+
+  unit-test:
+    uses: ./.github/workflows/unit-test.yaml
