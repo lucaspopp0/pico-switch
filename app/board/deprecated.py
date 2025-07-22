@@ -25,15 +25,21 @@ class Wheel:
         self.size = len(options)
         self.value = 0
 
-        self.on_press = lambda routine: None
-        self.on_long_press = lambda routine: None
+        def on_press(routine: Routine):
+            pass
+
+        def on_long_press(routine: Routine):
+            pass
+
+        self.on_press = on_press
+        self.on_long_press = on_long_press
 
         self.last_pressed = False
         self.pressed = False
         self.longPressTimer: Timer | None = None
 
-        self.clk.irq(lambda p: self._rotated())
-        self.sw.irq(lambda p: self._pressed())
+        self.clk.irq(lambda _: self._rotated())
+        self.sw.irq(lambda _: self._pressed())
 
         self.timer = None
         self._flash_color()
@@ -48,12 +54,11 @@ class Wheel:
     def _reset_timer(self):
         if self.timer != None:
             self.timer.deinit()
-            self.timer = None
 
         self.timer = Timer(-1,
                            mode=Timer.ONE_SHOT,
                            period=1000,
-                           callback=lambda t: self._led_off())
+                           callback=lambda _: self._led_off())
 
     def _rotated(self):
         a = self.clk.value()
