@@ -1,4 +1,6 @@
 # https://docs.codecov.com/docs/codecovyml-reference
+codecov:
+  branch: v2
 
 coverage:
   status:
