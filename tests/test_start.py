@@ -15,12 +15,12 @@ class TestStart(unittest.TestCase):
     def test_start_success(self, mock_update_manager, mock_shared):
         mock_shared.wifi._connected = True
         mock_update_manager.should_check_update.return_value = False
-
+        
         with patch('builtins.print'):
             with self.assertRaises(KeyboardInterrupt):
                 with patch('builtins.input', side_effect=KeyboardInterrupt):
                     start.start()
-
+        
         mock_shared.setup_config.assert_called_once()
         mock_shared.setup_request_queue.assert_called_once()
         mock_shared.setup_board.assert_called_once()
@@ -32,12 +32,12 @@ class TestStart(unittest.TestCase):
         mock_shared.api.start.assert_called_once()
 
     @patch('app.start.shared')
-    @patch('app.start.update_manager')
+    @patch('app.start.update_manager')  
     def test_start_wifi_not_connected(self, mock_update_manager, mock_shared):
         mock_shared.wifi._connected = False
-
+        
         result = start.start()
-
+        
         mock_shared.setup_config.assert_called_once()
         mock_shared.setup_request_queue.assert_called_once()
         mock_shared.setup_board.assert_called_once()
@@ -54,27 +54,26 @@ class TestStart(unittest.TestCase):
     def test_start_with_update_check(self, mock_update_manager, mock_shared):
         mock_shared.wifi._connected = True
         call_count = 0
-
+        
         def mock_should_check():
             nonlocal call_count
             call_count += 1
             return call_count == 1
-
+        
         mock_update_manager.should_check_update.side_effect = mock_should_check
-
+        
         with patch('builtins.print'):
             with self.assertRaises(KeyboardInterrupt):
-                with patch('builtins.input',
-                           side_effect=[None, KeyboardInterrupt]):
+                with patch('builtins.input', side_effect=[None, KeyboardInterrupt]):
                     start.start()
-
+        
         mock_update_manager.try_update.assert_called()
 
     @patch('app.start.shared')
     @patch('app.start.update_manager')
     def test_start_wifi_reconnection(self, mock_update_manager, mock_shared):
         call_count = 0
-
+        
         def mock_connected():
             nonlocal call_count
             call_count += 1
@@ -84,16 +83,15 @@ class TestStart(unittest.TestCase):
                 return False
             else:
                 return True
-
+        
         mock_shared.wifi._connected = mock_connected
         mock_update_manager.should_check_update.return_value = False
-
+        
         with patch('builtins.print'):
             with self.assertRaises(KeyboardInterrupt):
-                with patch('builtins.input',
-                           side_effect=[None, None, KeyboardInterrupt]):
+                with patch('builtins.input', side_effect=[None, None, KeyboardInterrupt]):
                     start.start()
-
+        
         self.assertGreater(mock_shared.wifi.connect.call_count, 1)
 
 

@@ -18,20 +18,19 @@ class TestOtaupdateUpdateManager(unittest.TestCase):
 
     def test_try_update_function_exists(self):
         from app.otaupdate import update_manager
-
+        
         self.assertTrue(hasattr(update_manager, 'try_update'))
         self.assertTrue(callable(getattr(update_manager, 'try_update', None)))
 
     def test_should_check_update_function_exists(self):
         from app.otaupdate import update_manager
-
+        
         self.assertTrue(hasattr(update_manager, 'should_check_update'))
-        self.assertTrue(
-            callable(getattr(update_manager, 'should_check_update', None)))
+        self.assertTrue(callable(getattr(update_manager, 'should_check_update', None)))
 
     def test_should_check_update_returns_boolean(self):
         from app.otaupdate import update_manager
-
+        
         try:
             result = update_manager.should_check_update()
             self.assertIsInstance(result, bool)
@@ -40,7 +39,7 @@ class TestOtaupdateUpdateManager(unittest.TestCase):
 
     def test_try_update_callable(self):
         from app.otaupdate import update_manager
-
+        
         try:
             update_manager.try_update()
         except Exception as e:
