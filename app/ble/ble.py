@@ -1,7 +1,7 @@
 import asyncio
-from .lib import aioble
+from ..lib import aioble
 import bluetooth
-from . import config, wifi
+from .. import shared
 
 _ADV_INTERVAL_US = 250000
 
@@ -31,23 +31,23 @@ def _get_type_value():
 
 
 def _get_name_value():
-    return "name: " + config.value["name"] or DEVICE_NAME
+    return "name: " + shared.config.value["name"] or DEVICE_NAME
 
 
 def _get_layout_value():
-    return "layout: " + config.value["layout"]
+    return "layout: " + shared.config.value["layout"]
 
 
 def _get_version_value():
-    return "version: " + str(config.version)
+    return "version: " + str(shared.config.version)
 
 
 def _get_ip_value():
-    return "ip: " + wifi.current_ip
+    return "ip: " + shared.wifi.ip
 
 
 def _get_ha_ip_value():
-    return "ha-ip: " + config.value["home-assistant-ip"]
+    return "ha-ip: " + shared.config.value["home-assistant-ip"]
 
 
 async def ble_server_task():
@@ -128,7 +128,7 @@ async def ble_server_task():
 
     try:
         """Start advertising our BLE service."""
-        device_name = "Smart Switch (" + (config.value["name"]
+        device_name = "Smart Switch (" + (shared.config.value["name"]
                                           or DEVICE_NAME) + ")"
         print(f"Starting BLE advertising as '{device_name}'")
 

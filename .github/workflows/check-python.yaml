@@ -74,24 +74,15 @@ jobs:
           app_id: ${{ vars.BOT_APP_ID }}
           private_key: ${{ secrets.BOT_APP_KEY }}
       -
-        name: Commit changes and push
+        name: Commit and push
         if: steps.detect-changes.outputs.changes == 'true'
+        uses: planetscale/ghcommit-action@v0.2.0
         env:
-          APP_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git config \
-            url."https://x-access-token:${APP_TOKEN}@github.com".insteadOf \
-            "https://github.com"
-
-          git add .
-          git commit -m "[bot] auto-format"
-          
-          # Output commit hash
-          COMMIT_HASH=$(git show --no-patch --format="%h")
-          echo "commit-hash=$COMMIT_HASH" | tee -a "$GITHUB_OUTPUT"
-
-          # push commit
-          git push
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          commit_message: "[bot] auto-format"
+          repo: ${{ github.repository }}
+          branch: ${{ github.head_ref || github.ref_name }}
 
   unit-test:
     uses: ./.github/workflows/unit-test.yaml
