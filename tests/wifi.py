@@ -1,5 +1,4 @@
 import unittest
-from mocks import network, machine
 
 from app.wifi.wifi import WiFiController
 
