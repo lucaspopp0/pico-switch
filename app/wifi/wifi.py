@@ -2,6 +2,7 @@ import network
 import time
 from machine import Timer
 
+
 class WiFiController:
 
     def __init__(
@@ -69,7 +70,8 @@ class WiFiController:
                 return
 
             elif status == network.STAT_NO_AP_FOUND:
-                self.on_failed('Failed to connect to "' + self._ssid + '" not', )
+                self.on_failed('Failed to connect to "' + self._ssid +
+                               '" not', )
                 return
 
             elif status == network.STAT_WRONG_PASSWORD:
