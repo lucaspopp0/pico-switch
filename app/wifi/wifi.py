@@ -2,7 +2,6 @@ import network
 import time
 from machine import Timer
 
-
 class WiFiController:
 
     def __init__(
@@ -19,7 +18,7 @@ class WiFiController:
         self._ip: str | None = None
 
         self._backoff = False
-        self._backoff_timer: Timer | None = None
+        self._backoff_timer = None
 
         self.on_connecting = lambda: None
         self.on_connected = lambda: None
@@ -36,7 +35,7 @@ class WiFiController:
         if self._backoff_timer is not None:
             self._backoff_timer.deinit()
 
-        def back_off(_: Timer):
+        def back_off(_):
             self._backoff = False
 
         self._backoff = True
@@ -61,6 +60,7 @@ class WiFiController:
             wait -= 1
 
             status = self.wlan.status()
+
             if status == network.STAT_GOT_IP:
                 self._connected = True
                 self.ip = self.wlan.ifconfig()[0]

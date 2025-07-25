@@ -27,6 +27,6 @@ python3 -m coverage --help 2>&1 > /dev/null \
 
 setup_mocks
 
-python3 -m coverage run -m unittest
+python3 -m coverage run -m unittest tests/**
 python3 -m coverage report
 python3 -m coverage xml
