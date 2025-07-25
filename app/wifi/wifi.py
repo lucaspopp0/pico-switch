@@ -70,9 +70,7 @@ class WiFiController:
                 return
 
             elif status == network.STAT_NO_AP_FOUND:
-                self.on_failed(
-                    'Failed to connect to "' + self._ssid + '"',
-                )
+                self.on_failed('Failed to connect to "' + self._ssid + '"', )
                 return
 
             elif status == network.STAT_WRONG_PASSWORD:
