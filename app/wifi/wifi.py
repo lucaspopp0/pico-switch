@@ -1,12 +1,11 @@
-import network
 import time
-from machine import Timer
-
 
 class WiFiController:
 
     def __init__(
         self,
+        machine,
+        network,
         ssid: str,
         psk: str,
     ):
@@ -14,12 +13,14 @@ class WiFiController:
         self._ssid = ssid
         self._psk = psk
 
+        self.machine = machine
+        self.network = network
         self.wlan = network.WLAN(network.STA_IF)
         self._connected = False
         self._ip: str | None = None
 
         self._backoff = False
-        self._backoff_timer: Timer | None = None
+        self._backoff_timer = None
 
         self.on_connecting = lambda: None
         self.on_connected = lambda: None
@@ -36,13 +37,13 @@ class WiFiController:
         if self._backoff_timer is not None:
             self._backoff_timer.deinit()
 
-        def back_off(_: Timer):
+        def back_off(_):
             self._backoff = False
 
         self._backoff = True
-        self._backoff_timer = Timer(
+        self._backoff_timer = self.machine.Timer(
             -1,
-            mode=Timer.ONE_SHOT,
+            mode=self.machine.Timer.ONE_SHOT,
             period=30000,
             callback=back_off,
         )
@@ -60,31 +61,31 @@ class WiFiController:
         while 0 < wait:
             wait -= 1
 
-            match self.wlan.status():
+            status = self.wlan.status()
 
-                case network.STAT_GOT_IP:
-                    self._connected = True
-                    self.ip = self.wlan.ifconfig()[0]
-                    print('WiFi connected! (' + self.ip + ')')
-                    self.on_connected()
-                    return
+            if status == self.network.STAT_GOT_IP:
+                self._connected = True
+                self.ip = self.wlan.ifconfig()[0]
+                print('WiFi connected! (' + self.ip + ')')
+                self.on_connected()
+                return
 
-                case network.STAT_NO_AP_FOUND:
-                    self.on_failed(
-                        'WiFi connection failed: Network "' + self._ssid +
-                        '" not', )
-                    return
+            elif status == self.network.STAT_NO_AP_FOUND:
+                self.on_failed(
+                    'WiFi connection failed: Network "' + self._ssid +
+                    '" not', )
+                return
 
-                case network.STAT_WRONG_PASSWORD:
-                    self.on_failed('WiFi connection failed: Wrong password', )
-                    return
+            elif status == self.network.STAT_WRONG_PASSWORD:
+                self.on_failed('WiFi connection failed: Wrong password', )
+                return
 
-                case network.STAT_CONNECT_FAIL:
-                    self.on_failed('WiFi connection failed', )
-                    return
+            elif status == self.network.STAT_CONNECT_FAIL:
+                self.on_failed('WiFi connection failed', )
+                return
 
-                case _:
-                    print('Trying to connect to "' + self._ssid + '"...')
-                    time.sleep(1)
+            else:
+                print('Trying to connect to "' + self._ssid + '"...')
+                time.sleep(1)
 
         self.on_failed('WiFi connection timed out after 10s', )

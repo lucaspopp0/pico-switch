@@ -12,7 +12,7 @@ unit-test:
 	@$(COVERAGE) --help 2>&1 > /dev/null \
 		|| $(PYTHON) -m pip install coverage
 	
-	@$(COVERAGE) run -m unittest
+	@$(COVERAGE) run -m unittest tests/**
 	
 	@$(COVERAGE) report
 	@$(COVERAGE) xml
