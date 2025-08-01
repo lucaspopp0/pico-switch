@@ -56,14 +56,14 @@ def try_update():
                 config.value["github-token"])
             headers["X-GitHub-Api-Version"] = "2022-11-28"
 
-        otaUpdater = OTAUpdater(board.shared.led,
+        otaUpdater = OTAUpdater(board.shared,
                                 'https://github.com/lucaspopp0/pico-switch',
                                 main_dir='app')
 
         if otaUpdater.install_update_if_available():
             machine.reset()
         else:
-            board.shared.led.off()
+            board.shared.do_color(0, 0, 0)
 
         del (otaUpdater)
         gc.collect()
