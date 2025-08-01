@@ -3,6 +3,21 @@ import time
 import socket
 from . import config
 
+shared_queue = None
+
+
+def setup_shared_queue():
+    global shared_queue
+    if shared_queue is None:
+        shared_queue = RequestQueue()
+
+
+def setup_shared_queue():
+    global shared_queue
+    if shared_queue is None:
+        shared_queue = RequestQueue()
+
+
 request_timeout_s = 2
 retries = 3
 socket_connect_s = 2
@@ -19,8 +34,10 @@ def new_socket():
     s.connect(homeAddr)
     return s
 
+
 def urlencode(txt):
     return txt.replace(' ', '%20')
+
 
 class RequestQueue:
 
@@ -71,7 +88,8 @@ class RequestQueue:
         req = self.requestBySocket(out[0][0])
 
         if req is None:
-            print("socket in queue has data, but could not tie it to a request")
+            print(
+                "socket in queue has data, but could not tie it to a request")
             out[0][0].close()
             return
         
@@ -92,6 +110,7 @@ class RequestQueue:
 
         self.requestsByPath[req.path].remove(req)
 
+
 class Request:
 
     def __init__(self, path):
@@ -102,8 +121,8 @@ class Request:
 
         self.expiry = None
 
-        self.on_success = lambda response : None
-        self.on_failure = lambda response : None
+        self.on_success = lambda _ : None
+        self.on_failure = lambda _ : None
 
     def send(self, queue):
         global retries
@@ -148,21 +167,20 @@ class Request:
     def succeeded(self):
         resp = parse_response(str(self.response))
         print('Request succeeded: ' + resp)
-        if self.on_success is not None:
-            self.on_success(resp)
+        self.on_success()
         self.close()
 
     def failed(self):
         err = parse_response(str(self.response))
         print('Request failed: ' + err)
-        if self.on_failure is not None:
-            self.on_failure(err)
+        self.on_failure()
         self.close()
 
     def close(self):
         if self.socket is not None:
             self.socket.close()
             self.socket = None
+
 
 def parse_response(response):
     ind = response.find("\r")

@@ -1,37 +1,45 @@
 import time
 
 from . import config
+
 config.read()
 config.read_version()
 
-from . import board, wifi
-board.setup()
-    
-def _board_set_wifi_connected(c):
-    wifi.connected = c
-    
-    if wifi.failed_attempts == wifi.max_attempts:
-        wifi.failed_attempts = 0
-        wifi.can_check = True
-    
-board.set_wifi_connected = _board_set_wifi_connected
+from .board import board
+
+board.setup(config.value)
+
 
 def startApp():
-    print('Starting app')
+    if board.shared is None:
+        return
 
+    print('Starting app')
+    from . import handlers
+    handlers.setup_handlers(board.shared)
+
+    # Connect to wifi
+    from . import wifi
     wifi.connect()
     board.shared.do_color(0, 0, 0)
-    
+
+    # If connection fails, bail out
     if not wifi.is_connected():
         raise RuntimeError('wifi connection failed')
-    
-    board.accepting_inputs = True
 
+    # Enable the board
+    board.shared.accepting_inputs = True
+
+    # Setup the request queue
+    from . import request
+    request.setup_shared_queue()
+
+    # Setup the BLE pairing callback
     from . import update_manager
     from . import routes
     from .server import server
     from . import ble
-    
+
     def ble_pairing():
         board.accepting_inputs = False
         board.shared.do_color(50, 0, 50)
@@ -43,32 +51,40 @@ def startApp():
         board.shared.do_color(0, 0, 0)
         board.accepting_inputs = True
 
+    # Setup the HTTP server
     svr = server.Server()
     routes.setup_routes(svr)
     svr.start()
 
+    # Start an infinite loop
     while True:
+        # Should check for wifi, check for wifi
         if not wifi.is_connected() and wifi.can_check:
             wifi.connect()
 
-        board.request_queue.poll()
+        # Check for request data
+        request.shared_queue.poll()
+
+        # Poll for server requests
         svr.poll()
 
+        # Check for updates on an interval
         if update_manager.should_check_update():
             update_manager.try_update()
-            
+
+        # Handle pairing requests
         if board.shared.needs_pairing:
             print("Pairing...")
             ble_pairing()
             board.shared.needs_pairing = False
 
+
 try:
     startApp()
 except KeyboardInterrupt as interrupt:
     print("Received interrupt. Shutting down")
-    
+
     try:
         board.shared.do_color(0, 0, 0)
     finally:
         pass
-    

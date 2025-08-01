@@ -18,13 +18,17 @@ accepting_inputs = False
 preparing_update = False
 preparing_pairing = False
 
+
 def _set_wifi_connected(connected):
     pass
 
+
 set_wifi_connected = _set_wifi_connected
+
 
 def pwmFreq(perc):
     return int((perc / 100.0) * 65_535.0)
+
 
 def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs, shared
@@ -42,7 +46,8 @@ def _buttonAction(key, long=False, flash_progress=True):
         deadline_timer = Timer().init(mode=Timer.ONE_SHOT, period=1000, callback=pass_deadline)
         
         if not accepting_inputs:
-            print("Ignoring press of " + str(key) + ", not accepting inputs right now")
+            print("Ignoring press of " + str(key) +
+                  ", not accepting inputs right now")
             return
         
         # Set up a new request
@@ -80,22 +85,22 @@ def _buttonAction(key, long=False, flash_progress=True):
             req.send(request_queue)
         except OSError as oserr:
             print("Failed to send: " + str(oserr))
-            
+
             # Run the failure callback if sending failed
             req.failed()
-            
+
             if oserr.args[0] == errno.EHOSTUNREACH:
                 set_wifi_connected(False)
-            
 
     return act
+
 
 class Button:
 
     def __init__(self, pins, key, board, override_action = None):
         self.board = board
         self.pins = pins
-        self.gpios = list(map(lambda pin : Pin(pin, Pin.IN, Pin.PULL_UP), pins))
+        self.gpios = list(map(lambda pin: Pin(pin, Pin.IN, Pin.PULL_UP), pins))
         self.last_pressed = False
         self.pressed = False
         self.last_press_time = time.ticks_ms()
@@ -130,8 +135,10 @@ class Button:
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
-                
+                self.longPressTimer.init(mode=Timer.ONE_SHOT,
+                                         period=longpress_ms,
+                                         callback=lpc)
+
                 now = time.ticks_ms()
                 self.last_press_time = now
                 self.action()
@@ -139,10 +146,10 @@ class Button:
                 self.board._button_unpress(self)
                 self._long_action()
 
-
     def _long_action(self):
         if self.long != None and self.pressed:
             self.long()
+
 
 class RgbLed:
 
@@ -169,12 +176,13 @@ class RgbLed:
         self.g.duty_u16(pwmFreq(g))
         self.b.duty_u16(pwmFreq(b))
 
-    async def flash(self, r, g, b, seconds = 0.1, times = 1):
+    async def flash(self, r, g, b, seconds=0.1, times=1):
         for x in range(times):
             self.do_color(r, g, b)
             time.sleep(seconds)
             self.off()
             time.sleep(seconds)
+
 
 class Routine:
 
@@ -182,6 +190,7 @@ class Routine:
         self.name = name
         self.color = color
         self.button = button
+
 
 class Wheel:
 
@@ -203,8 +212,8 @@ class Wheel:
         self.pressed = False
         self.longPressTimer = Timer()
 
-        self.clk.irq(lambda p:self._rotated())
-        self.sw.irq(lambda p:self._pressed())
+        self.clk.irq(lambda p: self._rotated())
+        self.sw.irq(lambda p: self._pressed())
 
         self.timer = None
         self._flash_color()
@@ -221,8 +230,9 @@ class Wheel:
             self.timer.deinit()
             self.timer = None
 
-        self.timer = Timer(mode=Timer.ONE_SHOT, period=1000, callback=lambda t: self._led_off())
-
+        self.timer = Timer(mode=Timer.ONE_SHOT,
+                           period=1000,
+                           callback=lambda t: self._led_off())
 
     def _rotated(self):
         a = self.clk.value()
@@ -261,10 +271,13 @@ class Wheel:
         if self.pressed != self.last_pressed:
             if self.pressed:
                 print("pressed: " + self.current_option().name)
+
                 def lpc(t):
                     self._long_action()
 
-                self.longPressTimer.init(mode=Timer.ONE_SHOT, period=longpress_ms, callback=lpc)
+                self.longPressTimer.init(mode=Timer.ONE_SHOT,
+                                         period=longpress_ms,
+                                         callback=lpc)
                 self._send_hook()
 
     def _long_action(self):
@@ -288,20 +301,21 @@ class Wheel:
         color = self.current_option().color
         self.led.do_color(color[0], color[1], color[2])
 
+
 class Switch:
-    
+
     def __init__(self, powerPin, switchPin, callbacks):
         self.powerPin = Pin(powerPin, Pin.OUT)
         self.switchPin = Pin(switchPin, Pin.IN)
         self.callbacks = callbacks
-        
+
         self.powerPin.value(1)
-        
+
         def _callback(pin):
             self.callback(pin.value())
-        
+
         self.switchPin.irq(_callback)
-        
+
     def callback(self, value):
         if value:
             self.callbacks["on"]()
@@ -416,7 +430,7 @@ class Board:
         self._pressed = {}
         self._update_press_timer = Timer()
         self._ble_press_timer = Timer()
-        
+
         self._should_update = False
         self._should_pair = False
         self.needs_pairing = False
@@ -503,8 +517,8 @@ class Board:
                 global accepting_inputs, dial
                 print("Not accepting inputs")
                 accepting_inputs = False
-                if self.dial is not None:
-                    self.dial.enabled = False
+                if dial is not None:
+                    dial.enabled = False
 
 
             self.switch = Switch(27, 28, {
@@ -514,7 +528,7 @@ class Board:
         
         elif layout == "v7":
             self.led = RgbLed(18, 19, 20)
-            
+
             self.buttons = {
                 "on": Button([10, 9], 'on', self),
                 "off": Button([5, 4], 'off', self),
@@ -547,24 +561,26 @@ class Board:
 
     def _button_press(self, button):
         global accepting_inputs, preparing_update, preparing_pairing
-        
+
         print("Pressed " + str(button.key))
-        
+
         self._pressed[str(button.key)] = True
-        
+
         self._should_update = self._could_update()
         if self._should_update:
             self._should_pair = False
             accepting_inputs = False
             preparing_update = True
-            
+
             print("Update press detected")
 
             def upc(_):
                 self._try_update()
-            
+
             self._update_press_timer.deinit()
-            self._update_press_timer.init(mode=Timer.ONE_SHOT, period=update_longpress_ms, callback=upc)
+            self._update_press_timer.init(mode=Timer.ONE_SHOT,
+                                          period=update_longpress_ms,
+                                          callback=upc)
 
         else:
             self._should_pair = self._could_pair()
@@ -578,31 +594,33 @@ class Board:
                 def ble_trigger(_):
                     if self._should_pair:
                         self.needs_pairing = True
-                
+
                 self._ble_press_timer.deinit()
-                self._ble_press_timer.init(mode=Timer.ONE_SHOT, period=ble_longpress_ms, callback=ble_trigger)
+                self._ble_press_timer.init(mode=Timer.ONE_SHOT,
+                                           period=ble_longpress_ms,
+                                           callback=ble_trigger)
 
     def _button_unpress(self, button):
         global accepting_inputs, preparing_update, preparing_pairing
-            
+
         if str(button.key) in self._pressed:
             del self._pressed[str(button.key)]
-        
+
         self._should_update = self._could_update()
         if preparing_update and not self._should_update:
             accepting_inputs = True
             preparing_update = False
             self._update_press_timer.deinit()
-        
+
         self._should_pair = self._could_pair()
         if preparing_pairing and not self.needs_pairing and not self._should_pair:
             preparing_pairing = False
             accepting_inputs = True
             self._ble_press_timer.deinit()
-    
+
     def _could_pair(self):
         return len(self._pressed) == 2
-        
+
     def _could_update(self):
         return len(self._pressed) == 4
 
