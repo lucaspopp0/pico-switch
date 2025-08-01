@@ -29,14 +29,6 @@ jobs:
         with:
           python-version: 3
       -
-        name: Configure git
-        run: |
-          git config --global \
-            user.name 'lucaspopp0-bot[bot]'
-
-          git config --global \
-            user.email 'lucaspopp0-bot[bot]@users.noreply.github.com'
-      -
         name: Checkout ref for commit
         run: |
           git checkout "${{ github.head_ref || github.ref_name }}"
@@ -57,7 +49,6 @@ jobs:
         name: Detect changes
         id: detect-changes
         run: |
-          git add .
           git status
 
           if [[ -n "$(git status -s)" ]]; then
@@ -74,13 +65,12 @@ jobs:
           app_id: ${{ vars.BOT_APP_ID }}
           private_key: ${{ secrets.BOT_APP_KEY }}
       -
-        name: Commit and push
-        if: steps.detect-changes.outputs.changes == 'true'
-        uses: planetscale/ghcommit-action@v0.2.0
+        name: Commit changes and push
+        uses: planetscale/ghcommit-action@v0.2.17
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
-          commit_message: "[bot] auto-format"
+          commit_message: "🤖 auto-format"
           repo: ${{ github.repository }}
           branch: ${{ github.head_ref || github.ref_name }}
 

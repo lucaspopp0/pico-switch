@@ -1,4 +1,4 @@
-import math
+import asyncio
 from machine import Pin
 from neopixel import NeoPixel
 from time import sleep
@@ -84,6 +84,6 @@ class NeoPixels:
     ):
         for _ in range(times):
             self.set_all(rgb)
-            sleep(seconds)
+            await asyncio.sleep(seconds)
             self.set_all((0, 0, 0))
-            sleep(seconds)
+            await asyncio.sleep(seconds)
