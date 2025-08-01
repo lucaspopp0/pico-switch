@@ -1,6 +1,7 @@
 from machine import Pin, PWM, Timer
 import time
 
+
 # Configure a pushbutton using one or more pins using a PULL_UP mode
 class PushButton:
 
