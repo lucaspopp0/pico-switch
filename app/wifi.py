@@ -73,4 +73,3 @@ def connect():
         
     can_check = False
     can_check_timer = Timer().init(mode=Timer.ONE_SHOT, period=5000, callback=check)
-
