@@ -24,10 +24,12 @@ socket_connect_s = 2
 
 homeAddr = None
 
+
 def new_socket():
     global homeAddr
     if homeAddr is None:
-        homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"], 8123)[0][-1]
+        homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"],
+                                      8123)[0][-1]
 
     s = socket.socket()
     s.settimeout(socket_connect_s)
@@ -92,7 +94,7 @@ class RequestQueue:
                 "socket in queue has data, but could not tie it to a request")
             out[0][0].close()
             return
-        
+
         def on_failure():
             global retries
             if req.retry < retries:
@@ -121,15 +123,15 @@ class Request:
 
         self.expiry = None
 
-        self.on_success = lambda _ : None
-        self.on_failure = lambda _ : None
+        self.on_success = lambda _: None
+        self.on_failure = lambda _: None
 
     def send(self, queue):
         global retries
-        
+
         if self.socket is not None:
             return
-            
+
         for self.retry in range(retries):
             try:
                 self.socket = new_socket()
@@ -156,10 +158,8 @@ class Request:
             self.response = self.socket.recv(1000)
 
     def handle_response(self):
-        if (
-            self.response is not None
-            and self.response.startswith(b'HTTP/1.1 200')
-        ):
+        if (self.response is not None
+                and self.response.startswith(b'HTTP/1.1 200')):
             self.succeeded()
         else:
             self.failed()
