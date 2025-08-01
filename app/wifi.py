@@ -63,7 +63,7 @@ def connect():
         status = wlan.ifconfig()
         current_ip = status[0]
         print('wifi connected! ip = ' + current_ip)
-
+        
         if board.shared.layout == 'v8':
             board.shared.neopixels.set_all((0, 0, 0))
             board.shared.neopixels.set_button('off', (3, 1, 0))

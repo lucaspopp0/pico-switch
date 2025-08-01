@@ -2,9 +2,8 @@ from machine import Pin
 from neopixel import NeoPixel
 from time import sleep
 
-
 class NeoPixels:
-
+    
     def __init__(self):
         self.rows = [
             NeoPixel(Pin(0), 6),
@@ -44,22 +43,22 @@ class NeoPixels:
             return (3, 2)
         else:
             raise Exception("unknown key: ", key)
-
+        
     # Set the RGB value of both pixels for a button
     def set_button(self, key, rgb) -> None:
         coords = self.pixel_coords(key)
         self.rows[coords[0]][coords[1]] = rgb
-        self.rows[coords[0]][coords[1] + 1] = rgb
+        self.rows[coords[0]][coords[1]+1] = rgb
         self.rows[coords[0]].write()
 
     def set_all(self, rgb):
         for row in self.rows:
             for i in range(len(row)):
                 row[i] = rgb
-
+            
             row.write()
 
-    async def flash(self, rgb, seconds=0.1, times=1):
+    async def flash(self, rgb, seconds = 0.1, times = 1):
         for x in range(times):
             self.set_all(rgb)
             sleep(seconds)
