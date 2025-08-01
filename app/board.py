@@ -524,7 +524,7 @@ class Board:
                 accepting_inputs = False
                 if self.dial is not None:
                     self.dial.enabled = False
-            
+
             self.switch = Switch(27, 28, {"on": _on, "off": _off})
 
         elif layout == "v7":
