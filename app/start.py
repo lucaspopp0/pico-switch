@@ -43,3 +43,8 @@ try:
     start()
 except KeyboardInterrupt as interrupt:
     print("Received interrupt. Shutting down")
+
+    try:
+        board.shared.do_color(0, 0, 0)
+    finally:
+        pass
