@@ -42,8 +42,7 @@ def connect():
         board.shared.do_color(15, 15, 0)
         time.sleep(0.3)
         if board.shared.layout == 'v8':
-            board.shared.neopixels.set_all(0, 0, 0)
-            board.shared.neopixels.set_button('off', (3, 1, 0))
+            board.shared.neopixels.set_all((0, 0, 0))
         else:
             board.shared.do_color(0, 0, 0)
         time.sleep(0.7)
@@ -74,3 +73,4 @@ def connect():
         
     can_check = False
     can_check_timer = Timer().init(mode=Timer.ONE_SHOT, period=5000, callback=check)
+
