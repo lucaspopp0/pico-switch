@@ -522,9 +522,9 @@ class Board:
                 global accepting_inputs, dial
                 print("Not accepting inputs")
                 accepting_inputs = False
-                if dial is not None:
-                    dial.enabled = False
-
+                if self.dial is not None:
+                    self.dial.enabled = False
+            
             self.switch = Switch(27, 28, {"on": _on, "off": _off})
 
         elif layout == "v7":
@@ -548,11 +548,11 @@ class Board:
             self.buttons = {
                 "on": V2Button(3, self.neopixels, "on", self),
                 "off": V2Button(19, self.neopixels, "off", self),
-                #"1": V2Button(1, self.neopixels, "1", self),
+                "1": V2Button(1, self.neopixels, "1", self),
                 "2": V2Button(2, self.neopixels, "2", self),
                 "3": V2Button(5, self.neopixels, "3", self),
                 "4": V2Button(6, self.neopixels, "4", self),
-                #"5": V2Button(17, self.neopixels, "5", self),
+                "5": V2Button(17, self.neopixels, "5", self),
                 "6": V2Button(18, self.neopixels, "6", self),
                 "7": V2Button(21, self.neopixels, "7", self),
                 "8": V2Button(22, self.neopixels, "8", self),
