@@ -36,23 +36,26 @@ def _buttonAction(key, long=False, flash_progress=True):
     def act():
         deadline_passed = False
         request_complete = False
-        
+
         def pass_deadline(_):
             deadline_passed = True
-            
+
             if request_complete and flash_progress and shared is not None:
                 shared.do_color(0, 0, 0)
-        
-        deadline_timer = Timer().init(mode=Timer.ONE_SHOT, period=1000, callback=pass_deadline)
-        
+
+        deadline_timer = Timer().init(mode=Timer.ONE_SHOT,
+                                      period=1000,
+                                      callback=pass_deadline)
+
         if not accepting_inputs:
             print("Ignoring press of " + str(key) +
                   ", not accepting inputs right now")
             return
-        
+
         # Set up a new request
         encoded_name = request.urlencode(config.value["name"])
-        request_path='remote-press?remote=' + encoded_name + '&button=' + str(key)
+        request_path = 'remote-press?remote=' + encoded_name + '&button=' + str(
+            key)
         req = request.Request(request_path)
 
         # Setup the success callback
@@ -70,7 +73,7 @@ def _buttonAction(key, long=False, flash_progress=True):
                 asyncio.run(shared.flash(50, 0, 0, times=2))
 
         req.on_failure = on_failure
-        
+
         # Flash LED on send
         if flash_progress and shared is not None:
             if long:
@@ -97,7 +100,7 @@ def _buttonAction(key, long=False, flash_progress=True):
 
 class Button:
 
-    def __init__(self, pins, key, board, override_action = None):
+    def __init__(self, pins, key, board, override_action=None):
         self.board = board
         self.pins = pins
         self.gpios = list(map(lambda pin: Pin(pin, Pin.IN, Pin.PULL_UP), pins))
@@ -322,15 +325,10 @@ class Switch:
         else:
             self.callbacks["off"]()
 
+
 class V2Button:
 
-    def __init__(
-        self,
-        buttonPin,
-        neopixels: NeoPixels,
-        key,
-        board
-    ):
+    def __init__(self, buttonPin, neopixels: NeoPixels, key, board):
         # Fill in the configuration
         self.buttonPin = buttonPin
         self.neopixels = neopixels
@@ -343,23 +341,24 @@ class V2Button:
         # Set up the button and neopixels
         def press_callback(_, long=False):
             return self.on_press(long)
-        
-        self.button = Button([self.buttonPin], self.key, self.board, press_callback)
-        
+
+        self.button = Button([self.buttonPin], self.key, self.board,
+                             press_callback)
+
         self.request_done = False
         self.timeout_done = False
-    
+
     def on_press(self, long=False):
         global accepting_inputs, shared
         accepting_inputs = False
-        
+
         self.request_done = False
         self.timeout_done = False
-        
+
         key = str(self.key)
         if long:
             key += '-long'
-            
+
         def off():
             if self.key == 'off':
                 self.neopixels.set_button(self.key, (3, 1, 0))
@@ -376,13 +375,15 @@ class V2Button:
             self.neopixels.set_button(self.key, (30, 0, 0))
             time.sleep(2)
             off()
-        
+
         def press_timeout(t):
             self.timeout_done = True
             if self.request_done:
                 off()
-        
-        req = request.Request('remote-press?remote=' + request.urlencode(config.value["name"]) + '&button=' + key)
+
+        req = request.Request('remote-press?remote=' +
+                              request.urlencode(config.value["name"]) +
+                              '&button=' + key)
         req.on_success = on_success
         req.on_failure = on_failure
 
@@ -390,18 +391,21 @@ class V2Button:
             global accepting_inputs
 
             if not accepting_inputs:
-                print("Ignoring press of " + str(self.key) + ", not accepting inputs right now")
+                print("Ignoring press of " + str(self.key) +
+                      ", not accepting inputs right now")
 
             self.pressTimer.deinit()
-            
+
             self.neopixels.set_button('off', (3, 1, 0))
 
             if long:
                 self.neopixels.set_button(self.key, (0, 15, 15))
             else:
                 self.neopixels.set_button(self.key, (10, 10, 10))
-        
-            self.pressTimer.init(mode=Timer.ONE_SHOT, period=1000, callback=press_timeout)
+
+            self.pressTimer.init(mode=Timer.ONE_SHOT,
+                                 period=1000,
+                                 callback=press_timeout)
 
             print('Sending: ' + str(self.key))
 
@@ -409,13 +413,14 @@ class V2Button:
                 req.send(request_queue)
             except OSError as oserr:
                 print("Failed to send: " + str(oserr))
-                
+
                 req.failed()
-                
+
                 if oserr.args[0] == errno.EHOSTUNREACH:
                     set_wifi_connected(False)
-        
+
         return act
+
 
 class Board:
 
@@ -520,12 +525,8 @@ class Board:
                 if dial is not None:
                     dial.enabled = False
 
+            self.switch = Switch(27, 28, {"on": _on, "off": _off})
 
-            self.switch = Switch(27, 28, {
-                "on": _on,
-                "off": _off
-            })
-        
         elif layout == "v7":
             self.led = RgbLed(18, 19, 20)
 
@@ -635,14 +636,17 @@ class Board:
         elif self.led is not None:
             self.led.do_color(r, g, b)
 
-    async def flash(self, r, g, b, seconds = 0.1, times = 1):
+    async def flash(self, r, g, b, seconds=0.1, times=1):
         if self.neopixels is not None:
-            return self.neopixels.flash((r, g, b), seconds=seconds, times=times)
+            return self.neopixels.flash((r, g, b),
+                                        seconds=seconds,
+                                        times=times)
         elif self.led is not None:
             return self.led.flash(r, g, b, seconds=seconds, times=times)
-              
 
-shared: Board | None = None  
+
+shared: Board | None = None
+
 
 def setup():
     global led, is_setup, dial, switch, accepting_inputs, shared
