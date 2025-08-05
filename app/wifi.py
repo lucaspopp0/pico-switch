@@ -41,9 +41,9 @@ def connect():
             break
         max_wait -= 1
         print('waiting for wifi...')
-        board.shared.do_color(15, 15, 0)
+        board.shared.led.do_color(50, 50, 0)
         time.sleep(0.3)
-        board.shared.do_color(0, 0, 0)
+        board.shared.led.off()
         time.sleep(0.7)
 
     def check(tmr):
@@ -55,7 +55,7 @@ def connect():
     if wlan.status() != 3:
         failed_attempts += 1
         connected = False
-        asyncio.run(board.shared.flash(30, 0, 0, times=5, seconds=0.3))
+        asyncio.run(board.shared.led.flash(100, 0, 0, times=5, seconds=0.3))
         print('wifi connection failed')
     else:
         failed_attempts = 0
@@ -63,12 +63,7 @@ def connect():
         status = wlan.ifconfig()
         current_ip = status[0]
         print('wifi connected! ip = ' + current_ip)
-
-        if board.shared.layout == 'v8':
-            board.shared.neopixels.set_all((0, 0, 0))
-            board.shared.neopixels.set_button('off', (3, 1, 0))
-        else:
-            asyncio.run(board.shared.flash(0, 0, 30, times=2))
+        asyncio.run(board.shared.led.flash(0, 0, 50, times=2))
 
     can_check = False
     can_check_timer = Timer().init(mode=Timer.ONE_SHOT,

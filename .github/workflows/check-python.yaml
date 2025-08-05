@@ -28,6 +28,14 @@ jobs:
         with:
           python-version: 3
       -
+        name: Configure git
+        run: |
+          git config --global \
+            user.name 'lucaspopp0-bot[bot]'
+
+          git config --global \
+            user.email 'lucaspopp0-bot[bot]@users.noreply.github.com'
+      -
         name: Checkout ref for commit
         run: |
           git checkout "${{ github.head_ref || github.ref_name }}"
@@ -48,6 +56,7 @@ jobs:
         name: Detect changes
         id: detect-changes
         run: |
+          git add .
           git status
 
           if [[ -n "$(git status -s)" ]]; then
@@ -65,13 +74,23 @@ jobs:
           private_key: ${{ secrets.BOT_APP_KEY }}
       -
         name: Commit changes and push
-        uses: planetscale/ghcommit-action@v0.2.17
+        if: steps.detect-changes.outputs.changes == 'true'
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        with:
-          commit_message: "🤖 auto-format"
-          repo: ${{ github.repository }}
-          branch: ${{ github.head_ref || github.ref_name }}
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config \
+            url."https://x-access-token:${APP_TOKEN}@github.com".insteadOf \
+            "https://github.com"
+
+          git add .
+          git commit -m "[bot] auto-format"
+          
+          # Output commit hash
+          COMMIT_HASH=$(git show --no-patch --format="%h")
+          echo "commit-hash=$COMMIT_HASH" | tee -a "$GITHUB_OUTPUT"
+
+          # push commit
+          git push
 
   unit-test:
     runs-on: ubuntu-latest

@@ -12,25 +12,13 @@ def setup_shared_queue():
         shared_queue = RequestQueue()
 
 
-def setup_shared_queue():
-    global shared_queue
-    if shared_queue is None:
-        shared_queue = RequestQueue()
-
-
-request_timeout_s = 2
-retries = 3
+request_timeout_s = 5
 socket_connect_s = 2
 
-homeAddr = None
+homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"], 8123)[0][-1]
 
 
 def new_socket():
-    global homeAddr
-    if homeAddr is None:
-        homeAddr = socket.getaddrinfo(config.value["home-assistant-ip"],
-                                      8123)[0][-1]
-
     s = socket.socket()
     s.settimeout(socket_connect_s)
     s.connect(homeAddr)
@@ -45,7 +33,7 @@ class RequestQueue:
 
     def __init__(self):
         self.poller = select.poll()
-        self.requestsByPath: dict[string, Request] = {}
+        self.requestsByPath = {}
 
     def requestBySocket(self, sock):
         for path in self.requestsByPath:
@@ -95,15 +83,6 @@ class RequestQueue:
             out[0][0].close()
             return
 
-        def on_failure():
-            global retries
-            if req.retry < retries:
-                print("Retrying...")
-                req.retry += 1
-                req.send(self)
-            else:
-                req.on_failure()
-
         req.recv()
 
         req.close()
@@ -119,33 +98,22 @@ class Request:
         self.path = path
         self.socket = None
         self.response = None
-        self.retry = 0
 
         self.expiry = None
 
-        self.on_success = lambda _: None
-        self.on_failure = lambda _: None
+        self.on_success = lambda: None
+        self.on_failure = lambda: None
 
     def send(self, queue):
-        global retries
-
         if self.socket is not None:
             return
 
-        for self.retry in range(retries):
-            try:
-                self.socket = new_socket()
-                queue.add(self)
-                raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
-                print('Sending: ' + self.path)
-                self.expiry = time.time() + request_timeout_s
-                self.socket.send(raw)
-                return
-            except OSError as err:
-                if self.retry + 1 < retries:
-                    print(err)
-                else:
-                    raise err
+        self.socket = new_socket()
+        queue.add(self)
+        raw = b'POST /api/webhook/' + self.path + b' HTTP/1.1\r\n\r\n'
+        print('Sending: ' + self.path)
+        self.expiry = time.time() + request_timeout_s
+        self.socket.send(raw)
 
     def is_expired(self):
         if self.expiry is not None:
@@ -154,12 +122,10 @@ class Request:
         return False
 
     def recv(self):
-        if self.socket is not None:
-            self.response = self.socket.recv(1000)
+        self.response = self.socket.recv(1000)
 
     def handle_response(self):
-        if (self.response is not None
-                and self.response.startswith(b'HTTP/1.1 200')):
+        if self.response.startswith(b'HTTP/1.1 200'):
             self.succeeded()
         else:
             self.failed()

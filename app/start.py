@@ -21,7 +21,7 @@ def startApp():
     # Connect to wifi
     from . import wifi
     wifi.connect()
-    board.shared.do_color(0, 0, 0)
+    board.shared.led.off()
 
     # If connection fails, bail out
     if not wifi.is_connected():
@@ -42,13 +42,13 @@ def startApp():
 
     def ble_pairing():
         board.accepting_inputs = False
-        board.shared.do_color(50, 0, 50)
+        board.shared.led.do_color(50, 0, 50)
         ble.start_ble_on_demand()
-        board.shared.do_color(0, 0, 0)
+        board.shared.led.off()
         time.sleep(0.2)
-        board.shared.do_color(50, 0, 50)
+        board.shared.led.do_color(50, 0, 50)
         time.sleep(0.2)
-        board.shared.do_color(0, 0, 0)
+        board.shared.led.off()
         board.accepting_inputs = True
 
     # Setup the HTTP server
@@ -85,6 +85,6 @@ except KeyboardInterrupt as interrupt:
     print("Received interrupt. Shutting down")
 
     try:
-        board.shared.do_color(0, 0, 0)
+        board.shared.led.off()
     finally:
         pass

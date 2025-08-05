@@ -4,7 +4,8 @@ import asyncio
 import errno
 
 from . import request, config, update_manager
-from .neopixels import NeoPixels
+
+shared = None
 
 longpress_ms = 1500
 update_longpress_ms = 5000
@@ -13,6 +14,12 @@ ble_longpress_ms = 5000
 is_setup = False
 
 request_queue = request.RequestQueue()
+
+led = None
+
+dial = None
+
+switch = None
 
 accepting_inputs = False
 preparing_update = False
@@ -33,63 +40,41 @@ def pwmFreq(perc):
 def _buttonAction(key, long=False, flash_progress=True):
     global accepting_inputs, shared
 
+    req = request.Request('remote-press?remote=' +
+                          request.urlencode(config.value["name"]) +
+                          '&button=' + str(key))
+
+    def on_success(response):
+        if flash_progress:
+            shared.led.off()
+
+    def on_failure(response):
+        asyncio.run(shared.led.flash(100, 0, 0, times=2))
+
+    req.on_success = on_success
+    req.on_failure = on_failure
+
     def act():
-        deadline_passed = False
-        request_complete = False
-
-        def pass_deadline(_):
-            deadline_passed = True
-
-            if request_complete and flash_progress and shared is not None:
-                shared.do_color(0, 0, 0)
-
-        deadline_timer = Timer().init(mode=Timer.ONE_SHOT,
-                                      period=1000,
-                                      callback=pass_deadline)
+        global accepting_inputs
 
         if not accepting_inputs:
             print("Ignoring press of " + str(key) +
                   ", not accepting inputs right now")
             return
 
-        # Set up a new request
-        encoded_name = request.urlencode(config.value["name"])
-        request_path = 'remote-press?remote=' + encoded_name + '&button=' + str(
-            key)
-        req = request.Request(request_path)
-
-        # Setup the success callback
-        def on_success(_):
-            request_complete = True
-            if deadline_passed and flash_progress and shared is not None:
-                shared.do_color(0, 0, 0)
-
-        req.on_success = on_success
-
-        # Setup the failure callback
-        def on_failure(_):
-            request_complete = True
-            if shared is not None:
-                asyncio.run(shared.flash(50, 0, 0, times=2))
-
-        req.on_failure = on_failure
-
-        # Flash LED on send
-        if flash_progress and shared is not None:
+        if flash_progress:
             if long:
-                shared.do_color(0, 15, 15)
+                shared.led.do_color(0, 50, 50)
             else:
-                shared.do_color(15, 15, 15)
+                shared.led.do_color(0, 0, 50)
 
         print('Sending: ' + str(key))
 
         try:
-            # Send the request
             req.send(request_queue)
         except OSError as oserr:
             print("Failed to send: " + str(oserr))
 
-            # Run the failure callback if sending failed
             req.failed()
 
             if oserr.args[0] == errno.EHOSTUNREACH:
@@ -100,7 +85,7 @@ def _buttonAction(key, long=False, flash_progress=True):
 
 class Button:
 
-    def __init__(self, pins, key, board, override_action=None):
+    def __init__(self, pins, key, board):
         self.board = board
         self.pins = pins
         self.gpios = list(map(lambda pin: Pin(pin, Pin.IN, Pin.PULL_UP), pins))
@@ -110,12 +95,8 @@ class Button:
         self.longPressTimer = Timer()
         self.key = key
 
-        if override_action is None:
-            self.action = _buttonAction(key)
-            self.long = _buttonAction(str(key) + '-long', long=True)
-        else:
-            self.action = override_action(key)
-            self.long = override_action(str(key) + '-long', long=True)
+        self.action = _buttonAction(key)
+        self.long = _buttonAction(str(key) + '-long', long=True)
 
         def _action(p):
             self._action()
@@ -288,9 +269,7 @@ class Wheel:
             self._send_hook(True)
 
     def _send_hook(self, long=False):
-        if self.timer is not None:
-            self.timer.deinit()
-
+        self.timer.deinit()
         self._flash_color()
 
         name = self.current_option().name
@@ -326,102 +305,6 @@ class Switch:
             self.callbacks["off"]()
 
 
-class V2Button:
-
-    def __init__(self, buttonPin, neopixels: NeoPixels, key, board):
-        # Fill in the configuration
-        self.buttonPin = buttonPin
-        self.neopixels = neopixels
-        self.key = key
-        self.board = board
-
-        self.color = (255, 0, 0)
-        self.pressTimer = Timer()
-
-        # Set up the button and neopixels
-        def press_callback(_, long=False):
-            return self.on_press(long)
-
-        self.button = Button([self.buttonPin], self.key, self.board,
-                             press_callback)
-
-        self.request_done = False
-        self.timeout_done = False
-
-    def on_press(self, long=False):
-        global accepting_inputs, shared
-        accepting_inputs = False
-
-        self.request_done = False
-        self.timeout_done = False
-
-        key = str(self.key)
-        if long:
-            key += '-long'
-
-        def off():
-            if self.key == 'off':
-                self.neopixels.set_button(self.key, (3, 1, 0))
-            else:
-                self.neopixels.set_button(self.key, (0, 0, 0))
-
-        def on_success(response):
-            self.request_done = True
-            if self.timeout_done:
-                off()
-
-        def on_failure(response):
-            self.request_done = True
-            self.neopixels.set_button(self.key, (30, 0, 0))
-            time.sleep(2)
-            off()
-
-        def press_timeout(t):
-            self.timeout_done = True
-            if self.request_done:
-                off()
-
-        req = request.Request('remote-press?remote=' +
-                              request.urlencode(config.value["name"]) +
-                              '&button=' + key)
-        req.on_success = on_success
-        req.on_failure = on_failure
-
-        def act():
-            global accepting_inputs
-
-            if not accepting_inputs:
-                print("Ignoring press of " + str(self.key) +
-                      ", not accepting inputs right now")
-
-            self.pressTimer.deinit()
-
-            self.neopixels.set_button('off', (3, 1, 0))
-
-            if long:
-                self.neopixels.set_button(self.key, (0, 15, 15))
-            else:
-                self.neopixels.set_button(self.key, (10, 10, 10))
-
-            self.pressTimer.init(mode=Timer.ONE_SHOT,
-                                 period=1000,
-                                 callback=press_timeout)
-
-            print('Sending: ' + str(self.key))
-
-            try:
-                req.send(request_queue)
-            except OSError as oserr:
-                print("Failed to send: " + str(oserr))
-
-                req.failed()
-
-                if oserr.args[0] == errno.EHOSTUNREACH:
-                    set_wifi_connected(False)
-
-        return act
-
-
 class Board:
 
     def __init__(self, layout):
@@ -430,7 +313,6 @@ class Board:
         self.led = None
         self.dial = None
         self.switch = None
-        self.neopixels = None
 
         self._pressed = {}
         self._update_press_timer = Timer()
@@ -515,15 +397,15 @@ class Board:
                 global accepting_inputs, dial
                 print("Accepting inputs")
                 accepting_inputs = True
-                if self.dial is not None:
-                    self.dial.enabled = True
+                if dial is not None:
+                    dial.enabled = True
 
             def _off():
                 global accepting_inputs, dial
                 print("Not accepting inputs")
                 accepting_inputs = False
-                if self.dial is not None:
-                    self.dial.enabled = False
+                if dial is not None:
+                    dial.enabled = False
 
             self.switch = Switch(27, 28, {"on": _on, "off": _off})
 
@@ -543,20 +425,6 @@ class Board:
                 "8": Button([2], 8, self),
             }
 
-        elif layout == "v8":
-            self.neopixels = NeoPixels()
-            self.buttons = {
-                "on": V2Button(3, self.neopixels, "on", self),
-                "off": V2Button(19, self.neopixels, "off", self),
-                "1": V2Button(1, self.neopixels, "1", self),
-                "2": V2Button(2, self.neopixels, "2", self),
-                "3": V2Button(5, self.neopixels, "3", self),
-                "4": V2Button(6, self.neopixels, "4", self),
-                "5": V2Button(17, self.neopixels, "5", self),
-                "6": V2Button(18, self.neopixels, "6", self),
-                "7": V2Button(21, self.neopixels, "7", self),
-                "8": V2Button(22, self.neopixels, "8", self),
-            }
         else:
             print("Unexpected config layout: " + str(layout))
 
@@ -630,23 +498,6 @@ class Board:
             print("Checking for updates...")
             update_manager.try_update()
 
-    def do_color(self, r, g, b):
-        if self.neopixels is not None:
-            self.neopixels.set_all((r, g, b))
-        elif self.led is not None:
-            self.led.do_color(r, g, b)
-
-    async def flash(self, r, g, b, seconds=0.1, times=1):
-        if self.neopixels is not None:
-            return self.neopixels.flash((r, g, b),
-                                        seconds=seconds,
-                                        times=times)
-        elif self.led is not None:
-            return self.led.flash(r, g, b, seconds=seconds, times=times)
-
-
-shared: Board | None = None
-
 
 def setup():
     global led, is_setup, dial, switch, accepting_inputs, shared
@@ -656,3 +507,6 @@ def setup():
     is_setup = True
 
     shared = Board(config.value["layout"])
+    led = shared.led
+    dial = shared.dial
+    switch = shared.switch

@@ -36,7 +36,7 @@ class OTAUpdater:
     """
 
     def __init__(self,
-                 board,
+                 led,
                  github_repo,
                  github_src_dir='',
                  module='',
@@ -44,7 +44,7 @@ class OTAUpdater:
                  new_version_dir='next',
                  secrets_file=None,
                  headers={}):
-        self.board = board
+        self.led = led
         self.http_client = HttpClient(headers=headers)
         self.github_repo = github_repo.rstrip('/').replace(
             'https://github.com/', '')
@@ -119,13 +119,13 @@ class OTAUpdater:
         (current_version, latest_version) = self._check_for_new_version()
         if isGreater(latest_version, current_version):
             print('Updating to version {}...'.format(latest_version))
-            self.board.do_color(5, 1, 0)
+            self.led.do_color(5, 1, 0)
             self._create_new_version_file(latest_version)
             self._download_new_version(latest_version)
             self._copy_secrets_file()
             self._delete_old_version()
             self._install_new_version()
-            self.board.do_color(0, 0, 0)
+            self.led.off()
             return True
 
         return False
@@ -202,17 +202,17 @@ class OTAUpdater:
                 file['path'].replace(self.main_dir +
                                      '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
-                self.board.do_color(5, 1, 0)
+                self.led.do_color(5, 1, 0)
                 gitPath = file['path']
                 print('\tDownloading: ', gitPath, 'to', path)
                 self._download_file(version, gitPath, path)
-                self.board.do_color(0, 0, 0)
+                self.led.off()
                 sleep(0.05)
             elif file['type'] == 'dir':
                 print('Creating dir', path)
-                self.board.do_color(5, 1, 0)
+                self.led.do_color(5, 1, 0)
                 self.mkdir(path)
-                self.board.do_color(0, 0, 0)
+                self.led.off()
                 self._download_all_files(version, sub_dir + '/' + file['name'])
             gc.collect()
 
