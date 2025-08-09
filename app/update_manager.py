@@ -43,29 +43,30 @@ def record_update(day):
 
 
 def try_update():
-    import machine, gc
+    pass
+    # import machine, gc
 
-    try:
-        from .ota_updater.ota_updater import OTAUpdater
-        from . import config
-        from .board import board
+    # try:
+    #     from .ota_updater.ota_updater import OTAUpdater
+    #     from . import config
+    #     from .board import board
 
-        headers = {}
-        if "github-token" in config.value:
-            headers["Authorization"] = "Bearer " + str(
-                config.value["github-token"])
-            headers["X-GitHub-Api-Version"] = "2022-11-28"
+    #     headers = {}
+    #     if "github-token" in config.value:
+    #         headers["Authorization"] = "Bearer " + str(
+    #             config.value["github-token"])
+    #         headers["X-GitHub-Api-Version"] = "2022-11-28"
 
-        otaUpdater = OTAUpdater(board.shared.led,
-                                'https://github.com/lucaspopp0/pico-switch',
-                                main_dir='app')
+    #     otaUpdater = OTAUpdater(board.shared.led,
+    #                             'https://github.com/lucaspopp0/pico-switch',
+    #                             main_dir='app')
 
-        if otaUpdater.install_update_if_available():
-            machine.reset()
-        else:
-            board.shared.led.off()
+    #     if otaUpdater.install_update_if_available():
+    #         machine.reset()
+    #     else:
+    #         board.shared.led.off()
 
-        del (otaUpdater)
-        gc.collect()
-    except Exception as e:
-        print(e)
+    #     del (otaUpdater)
+    #     gc.collect()
+    # except Exception as e:
+    #     print(e)
