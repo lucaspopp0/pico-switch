@@ -10,7 +10,6 @@ def start():
     shared.setup_request_queue()
     shared.setup_board()
     shared.setup_wifi()
-    shared.setup_bluetooth()
     shared.setup_automatic_updates()
     shared.setup_api()
 

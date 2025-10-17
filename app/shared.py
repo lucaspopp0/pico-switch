@@ -8,7 +8,6 @@ from .board import layouts, basics, deprecated
 from .config.config import Config
 from .wifi.wifi import WiFiController
 from .otaupdate import update_manager
-from .ble import ble
 from .api import server, routes
 
 requestqueue: RequestQueue
@@ -29,7 +28,7 @@ def setup_request_queue():
     global config, requestqueue
     requestqueue = RequestQueue(
         5,
-        config.value['homeassistant-ip'],
+        config.value['home-assistant-ip'],
     )
 
 
@@ -38,10 +37,8 @@ def setup_board():
 
     layout = str(config.value['layout'])
 
-    match layout:
-
-        case layouts.V3:
-            board = BasicButtonBoard(
+    if layout == layouts.V3:
+        board = BasicButtonBoard(
                 led=basics.RgbLED(18, 17, 16),
                 buttons={
                     "on": basics.PushButton([0, 5], 'on'),
@@ -60,74 +57,74 @@ def setup_board():
                     "12": basics.PushButton([3], 12),
                 },
             )
+        
+    elif layout == layouts.V4:
+        board = BasicButtonBoard(
+            led=basics.RgbLED(16, 17, 18),
+            buttons={
+                "on": basics.PushButton([9, 6], 'on'),
+                "off": basics.PushButton([3, 2], 'off'),
+                "1": basics.PushButton([10], 1),
+                "2": basics.PushButton([11], 2),
+                "3": basics.PushButton([8], 3),
+                "4": basics.PushButton([7], 4),
+                "5": basics.PushButton([5], 5),
+                "6": basics.PushButton([4], 6),
+                "7": basics.PushButton([1], 8),
+                "8": basics.PushButton([0], 7),
+            },
+        )
+        
+    elif layout == layouts.V5 or layout == layouts.V6:
+        led = basics.RgbLED(16, 17, 18)
 
-        case layouts.V4:
-            board = BasicButtonBoard(
-                led=basics.RgbLED(16, 17, 18),
-                buttons={
-                    "on": basics.PushButton([9, 6], 'on'),
-                    "off": basics.PushButton([3, 2], 'off'),
-                    "1": basics.PushButton([10], 1),
-                    "2": basics.PushButton([11], 2),
-                    "3": basics.PushButton([8], 3),
-                    "4": basics.PushButton([7], 4),
-                    "5": basics.PushButton([5], 5),
-                    "6": basics.PushButton([4], 6),
-                    "7": basics.PushButton([1], 8),
-                    "8": basics.PushButton([0], 7),
-                },
-            )
+        board = DialBoard(
+            led=led,
+            buttons={
+                "on": basics.PushButton([13, 14], 'on'),
+                "off": basics.PushButton([0, 2], 'off'),
+                "5": basics.PushButton([15], 5),
+                "6": basics.PushButton([12], 6),
+                "7": basics.PushButton([11], 7),
+                "8": basics.PushButton([1], 8),
+            },
+            dial=deprecated.Wheel(led, 7, 6, 8, []),
+            wheel_routines=config.value['wheel-routines'],
+        )
 
-        case layouts.V5 | layouts.V6:
-            led = basics.RgbLED(16, 17, 18)
+        # Setup the switch if V6
+        if layout is layouts.V6:
 
-            board = DialBoard(
-                led=led,
-                buttons={
-                    "on": basics.PushButton([13, 14], 'on'),
-                    "off": basics.PushButton([0, 2], 'off'),
-                    "5": basics.PushButton([15], 5),
-                    "6": basics.PushButton([12], 6),
-                    "7": basics.PushButton([11], 7),
-                    "8": basics.PushButton([1], 8),
-                },
-                dial=deprecated.Wheel(led, 7, 6, 8, []),
-                wheel_routines=config.value['wheel-routines'],
-            )
+            def _on():
+                board.enable()
 
-            # Setup the switch if V6
-            if layout is layouts.V6:
+            def _off():
+                board.disable()
 
-                def _on():
-                    board.enable()
+            board.switch = deprecated.Switch(27, 28, {
+                "on": _on,
+                "off": _off
+            })
 
-                def _off():
-                    board.disable()
+    elif layout == layouts.V7:
+        board = BasicButtonBoard(
+            led=basics.RgbLED(18, 19, 20),
+            buttons={
+                "on": basics.PushButton([10, 9], 'on'),
+                "off": basics.PushButton([5, 4], 'off'),
+                "1": basics.PushButton([12], 1),
+                "2": basics.PushButton([11], 2),
+                "3": basics.PushButton([7], 3),
+                "4": basics.PushButton([8], 4),
+                "5": basics.PushButton([0], 5),
+                "6": basics.PushButton([3], 6),
+                "7": basics.PushButton([1], 7),
+                "8": basics.PushButton([2], 8),
+            },
+        )
 
-                board.switch = deprecated.Switch(27, 28, {
-                    "on": _on,
-                    "off": _off
-                })
-
-        case layouts.V7:
-            board = BasicButtonBoard(
-                led=basics.RgbLED(18, 19, 20),
-                buttons={
-                    "on": basics.PushButton([10, 9], 'on'),
-                    "off": basics.PushButton([5, 4], 'off'),
-                    "1": basics.PushButton([12], 1),
-                    "2": basics.PushButton([11], 2),
-                    "3": basics.PushButton([7], 3),
-                    "4": basics.PushButton([8], 4),
-                    "5": basics.PushButton([0], 5),
-                    "6": basics.PushButton([3], 6),
-                    "7": basics.PushButton([1], 7),
-                    "8": basics.PushButton([2], 8),
-                },
-            )
-
-        case _:
-            raise Exception("Unknown layout: " + str(layout))
+    else:
+        raise Exception("Unknown layout: " + str(layout))
 
     def new_request(key: str) -> Request:
         return Request(
@@ -184,31 +181,6 @@ def setup_wifi():
     wifi.on_connecting = board.on_wifi_connecting
     wifi.on_connected = board.on_wifi_connected
     wifi.on_failed = board.on_wifi_failed
-
-
-def setup_bluetooth():
-    global board
-
-    pairing_task = None
-
-    def on_pair():
-
-        async def pair():
-            pairing_task = asyncio.create_task(ble.ble_server_task(), )
-
-            await asyncio.gather(pairing_task)
-            board._should_pair = False
-            board.preparing_pairing = False
-            board.accepting_inputs = True
-
-        asyncio.create_task(pair())
-
-    def on_pair_cancel():
-        if pairing_task is not None:
-            pairing_task.cancel()
-
-    board.on_pair = on_pair
-    board.on_pair_cancel = on_pair_cancel
 
 
 def setup_automatic_updates():
