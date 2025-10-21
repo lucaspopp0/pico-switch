@@ -9,12 +9,16 @@ from .request import Request
 class RequestQueue:
 
     socket_connect_s = 2
+    socket_addr = None
 
     @staticmethod
     def new_socket(host: str) -> socket.Socket:
+        if RequestQueue.socket_addr is None:
+            RequestQueue.socket_addr = socket.getaddrinfo(host, 8124)[0][-1]
+
         sock = socket.socket()
         sock.settimeout(RequestQueue.socket_connect_s)
-        sock.connect(host)
+        sock.connect(RequestQueue.socket_addr)
         return sock
 
     def __init__(self, capacity: int, host: str):

@@ -123,6 +123,23 @@ def setup_board():
             },
         )
 
+    elif layout == layouts.V9:
+        board = BasicButtonBoard(
+            led=basics.RgbLED(18, 19, 20),
+            buttons={
+                "on": basics.PushButton([3], 'on'),
+                "off": basics.PushButton([19], 'off'),
+                "1": basics.PushButton([1], 1),
+                "2": basics.PushButton([2], 2),
+                "3": basics.PushButton([5], 3),
+                "4": basics.PushButton([6], 4),
+                "5": basics.PushButton([17], 5),
+                "6": basics.PushButton([18], 6),
+                "7": basics.PushButton([21], 7),
+                "8": basics.PushButton([22], 8),
+            },
+        )
+
     else:
         raise Exception("Unknown layout: " + str(layout))
 

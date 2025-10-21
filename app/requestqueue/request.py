@@ -37,7 +37,8 @@ class Request:
 
         print('Sending: ' + self.path)
         raw = b'POST /api/webhook/' + self.path.encode('utf-8')
-        raw += b' HTTP/1.1\r\n\r\n'
+        raw += b' HTTP/1.1\r\n'
+        raw += b'Host: example.com\r\n\r\n'
         raw += self.body.encode('utf-8')
         self.socket.send(raw)
 
