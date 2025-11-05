@@ -41,4 +41,5 @@ def get_device_xml(server):
 
 def setup_routes(server):
     server.add_route(path="/info", handler=lambda r: get_info(server))
-    server.add_route(path="/device.xml", handler=lambda r: get_device_xml(server))
+    server.add_route(path="/device.xml",
+                     handler=lambda r: get_device_xml(server))

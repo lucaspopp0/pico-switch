@@ -68,7 +68,9 @@ class SSDPResponder:
         self.poller = select.poll()
         self.poller.register(self.sock, select.POLLIN)
 
-        print(f"SSDP responder started on {self.MULTICAST_ADDR}:{self.SSDP_PORT}")
+        print(
+            f"SSDP responder started on {self.MULTICAST_ADDR}:{self.SSDP_PORT}"
+        )
 
     def stop(self):
         """Stop the SSDP responder and close socket."""
@@ -148,8 +150,7 @@ class SSDPResponder:
             f"SERVER: MicroPython/1.20 PicoSwitch/{self.device_version}\r\n"
             f"ST: {self.DEVICE_TYPE}\r\n"
             f"USN: {usn}\r\n"
-            "\r\n"
-        )
+            "\r\n")
 
         try:
             # Send unicast response to requester
