@@ -21,6 +21,9 @@ def start():
     # Setup the HTTP server
     shared.api.start()
 
+    # Setup SSDP discovery responder
+    shared.setup_ssdp()
+
     # Start an infinite loop
     while True:
         # Should check for wifi, check for wifi
@@ -32,6 +35,9 @@ def start():
 
         # Poll for api requests
         shared.api.poll()
+
+        # Poll for SSDP discovery requests
+        shared.ssdp.poll()
 
         # Check for updates on an interval
         if update_manager.should_check_update():
