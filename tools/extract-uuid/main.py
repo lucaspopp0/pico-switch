@@ -8,10 +8,9 @@ import ubinascii
 
 
 def get_device_uuid() -> str:
-    """Display the hexadecimal representation of the device's UID"""
+    """Return the device UUID as an uppercase hexadecimal string"""
     uid_bytes = machine.unique_id()
-    uid = ubinascii.hexlify(uid_bytes).decode()
-    return uid
+    return ubinascii.hexlify(uid_bytes).decode().upper()
 
 
 uuid = get_device_uuid()
