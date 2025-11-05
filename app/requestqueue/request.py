@@ -36,13 +36,14 @@ class Request:
         self.bytes_received = bytes([])
 
         body_encoded = self.body.encode('utf-8')
-        
+
         print('Sending: ' + self.path)
         raw = b'POST /api/' + self.path.encode('utf-8')
         raw += b' HTTP/1.1\r\n'
         raw += b'Host: example.com\r\n'
         raw += b'Content-Type: application/json\r\n'
-        raw += b'Content-Length: ' + str(len(body_encoded)).encode('utf-8') + b'\r\n'
+        raw += b'Content-Length: ' + str(
+            len(body_encoded)).encode('utf-8') + b'\r\n'
         raw += b'\r\n'
         raw += body_encoded
         self.socket.send(raw)

@@ -42,7 +42,7 @@ try:
     start()
 except KeyboardInterrupt as interrupt:
     print("Received interrupt. Shutting down")
-    
+
     from . import shared
 
     try:

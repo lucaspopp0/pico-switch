@@ -5,6 +5,7 @@ from .basics import PushButton, RgbLED
 from .deprecated import Routine, Wheel, Switch
 from .neopixels import NeoPixels
 
+
 class Board:
 
     update_longpress_ms = 5000
@@ -287,6 +288,7 @@ class DialBoard(BasicButtonBoard):
     def disable(self):
         super().disable()
         self.dial.enabled = False
+
 
 class NeopixelBoard(Board):
 

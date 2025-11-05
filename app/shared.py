@@ -39,25 +39,25 @@ def setup_board():
 
     if layout == layouts.V3:
         board = BasicButtonBoard(
-                led=basics.RgbLED(18, 17, 16),
-                buttons={
-                    "on": basics.PushButton([0, 5], 'on'),
-                    "off": basics.PushButton([10, 15], 'off'),
-                    "1": basics.PushButton([28], 1),
-                    "2": basics.PushButton([11], 2),
-                    "3": basics.PushButton([6], 3),
-                    "4": basics.PushButton([1], 4),
-                    "5": basics.PushButton([27], 5),
-                    "6": basics.PushButton([12], 6),
-                    "7": basics.PushButton([7], 7),
-                    "8": basics.PushButton([2], 8),
-                    "9": basics.PushButton([26], 9),
-                    "10": basics.PushButton([13], 10),
-                    "11": basics.PushButton([8], 11),
-                    "12": basics.PushButton([3], 12),
-                },
-            )
-        
+            led=basics.RgbLED(18, 17, 16),
+            buttons={
+                "on": basics.PushButton([0, 5], 'on'),
+                "off": basics.PushButton([10, 15], 'off'),
+                "1": basics.PushButton([28], 1),
+                "2": basics.PushButton([11], 2),
+                "3": basics.PushButton([6], 3),
+                "4": basics.PushButton([1], 4),
+                "5": basics.PushButton([27], 5),
+                "6": basics.PushButton([12], 6),
+                "7": basics.PushButton([7], 7),
+                "8": basics.PushButton([2], 8),
+                "9": basics.PushButton([26], 9),
+                "10": basics.PushButton([13], 10),
+                "11": basics.PushButton([8], 11),
+                "12": basics.PushButton([3], 12),
+            },
+        )
+
     elif layout == layouts.V4:
         board = BasicButtonBoard(
             led=basics.RgbLED(16, 17, 18),
@@ -74,7 +74,7 @@ def setup_board():
                 "8": basics.PushButton([0], 7),
             },
         )
-        
+
     elif layout == layouts.V5 or layout == layouts.V6:
         led = basics.RgbLED(16, 17, 18)
 
@@ -101,10 +101,7 @@ def setup_board():
             def _off():
                 board.disable()
 
-            board.switch = deprecated.Switch(27, 28, {
-                "on": _on,
-                "off": _off
-            })
+            board.switch = deprecated.Switch(27, 28, {"on": _on, "off": _off})
 
     elif layout == layouts.V7:
         board = BasicButtonBoard(
