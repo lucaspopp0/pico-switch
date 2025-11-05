@@ -9,12 +9,14 @@ from .config.config import Config
 from .wifi.wifi import WiFiController
 from .otaupdate import update_manager
 from .api import server, routes
+from .ssdp.responder import SSDPResponder
 
 requestqueue: RequestQueue
 board: Board
 config: Config
 wifi: WiFiController
 api: server.Server
+ssdp: SSDPResponder
 
 
 def setup_config():
@@ -223,3 +225,16 @@ def setup_api():
 
     api = server.Server()
     routes.setup_routes(api)
+
+
+def setup_ssdp():
+    global config, wifi, ssdp
+
+    # Get device information
+    device_uuid = Config.device_uuid()
+    device_ip = wifi.ip
+    device_version = config.version
+
+    # Initialize SSDP responder
+    ssdp = SSDPResponder(device_uuid, device_ip, device_version)
+    ssdp.start()
