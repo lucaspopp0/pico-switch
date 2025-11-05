@@ -21,8 +21,10 @@ class ConfigValue(dict):
 class Config:
 
     @staticmethod
-    def device_uuid():
-        return binascii.hexlify(machine.unique_id()).upper()
+    def device_uuid() -> str:
+        """Return the device UUID as an uppercase hexadecimal string"""
+        uid_bytes = machine.unique_id()
+        return binascii.hexlify(uid_bytes).decode().upper()
 
     filename = '../../config.json'
     versionfile = '../app/.version'
