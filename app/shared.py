@@ -3,8 +3,8 @@ import json
 
 from .requestqueue.queue import RequestQueue
 from .requestqueue.request import Request
-from .board.board import Board, BasicButtonBoard, DialBoard
-from .board import layouts, basics, deprecated
+from .board.board import Board, BasicButtonBoard, DialBoard, NeopixelBoard
+from .board import layouts, basics, deprecated, neopixels
 from .config.config import Config
 from .wifi.wifi import WiFiController
 from .otaupdate import update_manager
@@ -124,8 +124,8 @@ def setup_board():
         )
 
     elif layout == layouts.V9:
-        board = BasicButtonBoard(
-            led=basics.RgbLED(18, 19, 20),
+        pixelboard = NeopixelBoard(
+            neopixels=neopixels.NeoPixels(),
             buttons={
                 "on": basics.PushButton([3], 'on'),
                 "off": basics.PushButton([19], 'off'),
@@ -139,6 +139,21 @@ def setup_board():
                 "8": basics.PushButton([22], 8),
             },
         )
+
+        def on_req_success():
+            pixelboard.neopixels.set_all((0, 0, 0))
+
+        def on_req_failure():
+            asyncio.run(pixelboard.neopixels.flash((100, 0, 0), times=2))
+
+        def on_press(key: str):
+            req = new_request(key)
+            req.on_success = on_req_success
+            req.on_failure = on_req_failure
+            requestqueue.add(req)
+
+        pixelboard.on_press = on_press
+        board = pixelboard
 
     else:
         raise Exception("Unknown layout: " + str(layout))
