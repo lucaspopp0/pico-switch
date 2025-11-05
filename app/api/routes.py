@@ -1,4 +1,4 @@
-from . import config
+from .. import config
 
 
 def get_info(server):

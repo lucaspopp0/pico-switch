@@ -3,6 +3,7 @@ from machine import Timer
 
 from .basics import PushButton, RgbLED
 from .deprecated import Routine, Wheel, Switch
+from .neopixels import NeoPixels
 
 
 class Board:
@@ -287,3 +288,72 @@ class DialBoard(BasicButtonBoard):
     def disable(self):
         super().disable()
         self.dial.enabled = False
+
+
+class NeopixelBoard(Board):
+
+    def __init__(
+        self,
+        buttons: dict[str, PushButton],
+        neopixels: NeoPixels,
+        flipped=False,
+    ):
+        Board.__init__(self, flipped)
+
+        self.neopixels = neopixels
+        self.buttons = buttons
+
+        # Setup event handlers for buttons
+        for button in self.buttons.values():
+            button.on_press = lambda key: self._on_button_press(key)
+            button.on_long_press = lambda key: self._on_button_long_press(key)
+            button.on_release = lambda key: self._on_button_release(key)
+
+    def _on_button_press(self, key: str):
+        self._button_press(key)
+
+        if not self.accepting_inputs:
+            return
+
+        self.neopixels.set_all((0, 0, 50))
+        self.on_press(key)
+
+    def _on_button_long_press(self, key: str):
+        if not self.accepting_inputs:
+            return
+
+        self.neopixels.set_all((0, 50, 50))
+        self.on_press(key + '-long')
+
+    def _on_button_release(self, key: str):
+        self._button_unpress(key)
+        self.on_release(key)
+
+    def on_wifi_connecting(self):
+        super().on_wifi_connecting()
+
+        async def loop():
+            on = False
+            while self._wifi_connecting:
+                if on:
+                    self.neopixels.set_all((0, 0, 0))
+                else:
+                    self.neopixels.set_all((50, 0, 50))
+
+                on = not on
+                await asyncio.sleep(0.2)
+
+        asyncio.create_task(loop())
+        self.enable()
+
+    def on_wifi_connected(self):
+        super().on_wifi_connected()
+
+        # Flash blue
+        asyncio.create_task(self.neopixels.flash((0, 0, 50), times=2))
+
+    def on_wifi_failed(self, failure: str):
+        super().on_wifi_failed(failure)
+
+        # Flash the LED
+        asyncio.create_task(self.neopixels.flash((50, 0, 0), times=3))

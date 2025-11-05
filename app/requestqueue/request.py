@@ -35,10 +35,17 @@ class Request:
         self.expiry = time.time() + Request.request_timeout_s
         self.bytes_received = bytes([])
 
+        body_encoded = self.body.encode('utf-8')
+
         print('Sending: ' + self.path)
-        raw = b'POST /api/webhook/' + self.path.encode('utf-8')
-        raw += b' HTTP/1.1\r\n\r\n'
-        raw += self.body.encode('utf-8')
+        raw = b'POST /api/' + self.path.encode('utf-8')
+        raw += b' HTTP/1.1\r\n'
+        raw += b'Host: example.com\r\n'
+        raw += b'Content-Type: application/json\r\n'
+        raw += b'Content-Length: ' + str(
+            len(body_encoded)).encode('utf-8') + b'\r\n'
+        raw += b'\r\n'
+        raw += body_encoded
         self.socket.send(raw)
 
     # Check for timeout

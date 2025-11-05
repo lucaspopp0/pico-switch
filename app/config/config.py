@@ -24,8 +24,8 @@ class Config:
     def device_uuid():
         return binascii.hexlify(machine.unique_id()).upper()
 
-    filename = 'config.json'
-    versionfile = 'app/.version'
+    filename = '../../config.json'
+    versionfile = '../app/.version'
 
     def __init__(self):
         self.value = ConfigValue({})
@@ -33,31 +33,22 @@ class Config:
 
     def load(self):
         # Load the config file
-        try:
-            with open(Config.filename, 'r') as file:
-                self.raw = ConfigValue(json.load(file))
-        except Exception as e:
-            if self.raw is not None:
-                raise e
-            else:
-                self.raw = ConfigValue({})
+        with open(Config.filename, 'r') as file:
+            self.value = ConfigValue(json.load(file))
 
         # Load the version file
         try:
             with open(Config.versionfile, 'r') as f:
                 self.version = f.read().replace('[\n\r\t ]', '')
         except Exception as e:
-            if self.version is not None:
-                raise e
-            else:
-                self.version = 'v0.0.0'
+            print("Failed to load version:" + str(e))
 
     def dump(self):
         with open(Config.filename, 'w') as f:
-            json.dump(self.raw, f)
+            json.dump(self.value, f)
 
     def publicinfo(self) -> str:
-        safe_value = self.raw.copy()
+        safe_value = self.value.copy()
         del safe_value["wifi"]
 
         return json.dumps({

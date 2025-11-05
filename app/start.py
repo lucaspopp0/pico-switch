@@ -10,8 +10,7 @@ def start():
     shared.setup_request_queue()
     shared.setup_board()
     shared.setup_wifi()
-    shared.setup_bluetooth()
-    shared.setup_automatic_updates()
+    # shared.setup_automatic_updates()
     shared.setup_api()
 
     # Try connecting to WiFi
@@ -44,7 +43,9 @@ try:
 except KeyboardInterrupt as interrupt:
     print("Received interrupt. Shutting down")
 
+    from . import shared
+
     try:
-        board.shared.do_color(0, 0, 0)
+        shared.board.do_color(0, 0, 0)
     finally:
         pass
